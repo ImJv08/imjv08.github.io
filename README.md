@@ -2,10 +2,10 @@
 
 <div align="center">
 
-A modern, customizable portfolio template built with **Astro 5** and **DaisyUI 5**. A beautiful, fast, and highly customizable portfolio template for developers, designers, and creatives.
+A modern, customizable portfolio template built with **Astro 6** and **DaisyUI 5**. A beautiful, fast, and highly customizable portfolio template for developers, designers, and creatives.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Astro](https://img.shields.io/badge/Astro-5.x-FF5D01?logo=astro&logoColor=white)](https://astro.build)
+[![Astro](https://img.shields.io/badge/Astro-6.x-FF5D01?logo=astro&logoColor=white)](https://astro.build)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![DaisyUI](https://img.shields.io/badge/DaisyUI-5.x-5A0EF8?logo=daisyui&logoColor=white)](https://daisyui.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -30,7 +30,10 @@ A modern, customizable portfolio template built with **Astro 5** and **DaisyUI 5
 - 🌸 **FAB Flower Menu** - Expandable floating action button for extra links (desktop)
 - 📱 **Mobile Dock Navigation** - Bottom navigation bar for mobile devices
 - ⭐ **Featured Projects** - Highlight your best work on the homepage
-- 🎨 **Modern Stack** - Astro 5 + Tailwind CSS 4 + DaisyUI 5 + TypeScript
+- 🏷️ **Project Categories** - Organize projects by custom categories (managed via Keystatic CMS)
+- 📐 **3 Projects Page Layouts** - Grid, Horizontal Tabs, or Sidebar layout (configurable in General Settings)
+- 🔗 **Inline Links in Hero** - Add clickable links inside Hero title and description using `[link:<url>]text[/link]` syntax
+- 🎨 **Modern Stack** - Astro 6 + Tailwind CSS 4 + DaisyUI 5 + TypeScript
 - 🔍 **SEO Optimized** - Meta tags, Open Graph, and semantic HTML
 - ♿ **Accessible** - Built with accessibility in mind
 
@@ -99,6 +102,43 @@ Control which sections appear on your homepage through **General Settings** in K
 
 The Hero section is always visible.
 
+### Project Categories
+
+Organize your projects by custom categories. Categories are managed via Keystatic CMS as a dedicated collection:
+
+1. Go to `/keystatic` → **Project Categories**
+2. Create categories with a name, description, emoji icon, and sort order
+3. When editing a **Project**, select its category from the dropdown
+
+Three default categories are included: **🤖 AI Made**, **🚀 Real Projects**, **🧪 Experiments**.
+
+On the `/projects` page, projects are grouped under their category heading. Uncategorized projects appear in an "Other" section.
+
+### Projects Page Layout
+
+Choose from 3 layout styles for the projects listing page in **General Settings** → **Projects Page Layout**:
+
+| Layout | Description |
+| :--- | :--- |
+| **Grid** (default) | Stacked category sections with card grids |
+| **Horizontal Tabs** | DaisyUI `tabs-border` with category tabs at the top |
+| **Sidebar** | DaisyUI `menu` sidebar on the left with content area on the right |
+
+### Inline Links in Hero
+
+You can add clickable links inside the Hero section's **Title** and **Description** fields using a simple syntax:
+
+```
+[link:<url>]visible text[/link]
+```
+
+**Example:**
+```
+Astro Portfolio Template built with [link:https://daisyui.com]🌼 DaisyUI[/link]
+```
+
+Renders as: Astro Portfolio Template built with [🌼 DaisyUI](https://daisyui.com)
+
 ### Theme Settings
 
 Choose between a theme selector dropdown or a simple light/dark toggle in General Settings.
@@ -146,6 +186,9 @@ bloomfolio/
 │   │   ├── Hero.astro
 │   │   ├── ProjectCard.astro
 │   │   ├── Projects.astro
+│   │   ├── ProjectsLayoutGrid.astro          # Grid layout (default)
+│   │   ├── ProjectsLayoutTabsHorizontal.astro # Horizontal tabs layout
+│   │   ├── ProjectsLayoutTabsVertical.astro   # Sidebar menu layout
 │   │   ├── SkillBadge.astro
 │   │   ├── Spotify.astro
 │   │   ├── ThemeSelector.astro
@@ -157,7 +200,9 @@ bloomfolio/
 │   │   ├── about/     # About section (1 file)
 │   │   ├── blog/      # Blog posts (.md or .mdx)
 │   │   ├── education/ # Education history
+│   │   ├── general/   # General settings
 │   │   ├── hackathons/# Hackathon entries
+│   │   ├── projectCategories/ # Project category definitions
 │   │   ├── projects/  # Portfolio projects
 │   │   └── work/      # Work experience
 │   ├── layouts/       # Page layouts
@@ -174,8 +219,12 @@ bloomfolio/
 │   │       └── [...slug].astro
 │   ├── styles/
 │   │   └── global.css # Tailwind + DaisyUI + Typography
+│   ├── utils/
+│   │   ├── iconMapper.ts
+│   │   └── parseInlineLinks.ts  # [link:<url>]text[/link] parser
 │   └── content.config.ts # Content schemas
 ├── astro.config.mjs   # Astro configuration
+├── keystatic.config.ts # Keystatic CMS configuration
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -311,6 +360,7 @@ Create a new file in `src/content/projects/`:
 ```markdown
 ---
 featured: true  # Show on homepage (max 3 featured projects)
+category: real-projects  # Category slug (managed in Project Categories)
 title: "Project Name"
 description: "Brief description"
 image: "./screenshot.png"
@@ -324,7 +374,7 @@ sourceLink: "https://github.com/..."  # Optional
 Detailed project description...
 ```
 
-Set `featured: true` to display the project on the homepage. Up to 3 featured projects are shown, sorted by most recent.
+Set `featured: true` to display the project on the homepage. Up to 3 featured projects are shown, sorted by most recent. The `category` field references a slug from the **Project Categories** collection.
 
 #### Work Experience
 
@@ -387,13 +437,15 @@ Detailed information about the hackathon and your project...
 **Hero** (`src/content/hero/index.yaml`):
 ```yaml
 name: Your Name
-title: Your Professional Title
+title: "Your Title with [link:https://example.com]a link[/link]"
 description: Brief description of your portfolio
 avatar: "./avatar.png"
 location: 🌍 Your Location
-githubUrl: https://github.com/username
-linkedinUrl: https://linkedin.com/in/username
-# ... other social links
+socialLinks:
+  - url: https://github.com/username
+    icon: GitHub
+    label: GitHub
+  # ... other social links
 ```
 
 **About** (`src/content/about/index.md`):
@@ -570,7 +622,7 @@ Bloomfolio works with any static hosting platform that supports Node.js builds:
 
 ## 🛠️ Tech Stack
 
-- **[Astro 5](https://astro.build)** - Static site generator
+- **[Astro 6](https://astro.build)** - Static site generator
 - **[Tailwind CSS 4](https://tailwindcss.com)** - Utility-first CSS framework
 - **[Tailwind Typography](https://tailwindcss.com/docs/typography-plugin)** - Beautiful prose styling
 - **[DaisyUI 5](https://daisyui.com)** - Component library for Tailwind
