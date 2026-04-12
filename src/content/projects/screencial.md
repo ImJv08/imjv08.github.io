@@ -13,6 +13,7 @@ skills:
   - Tailwind CSS
 demoLink: https://screencial.art
 featured: true
+category: real-projects
 ---
 ## Overview
 

@@ -1,4 +1,6 @@
 ---
+featured: false
+category: ai-made
 title: 🌻 Bloomfolio
 description: >-
   Astro portfolio template with 🌼 Daisy UI. A modern, responsive, and

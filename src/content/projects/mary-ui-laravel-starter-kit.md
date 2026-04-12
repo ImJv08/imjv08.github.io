@@ -18,6 +18,7 @@ skills:
 demoLink: https://github.com/lauroguedes/mary-ui-starter-kit
 sourceLink: https://github.com/lauroguedes/mary-ui-starter-kit
 featured: true
+category: real-projects
 ---
 ## Project Overview
 

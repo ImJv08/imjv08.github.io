@@ -6,9 +6,10 @@ import type { CollectionEntry } from "astro:content";
 
 interface Props {
   project: CollectionEntry<"projects">;
+  categoryLabel?: string;
 }
 
-const { project } = Astro.props;
+const { project, categoryLabel } = Astro.props;
 
 function formatPeriod(startDate: Date, endDate?: Date) {
   const options: Intl.DateTimeFormatOptions = {
@@ -42,9 +43,14 @@ function formatPeriod(startDate: Date, endDate?: Date) {
     <h3 class="card-title hover:text-primary transition-colors">
       <a href={`/projects/${project.id}`}>{project.data.title}</a>
     </h3>
-    <time class="text-sm text-base-content/60">
-      {formatPeriod(project.data.startDate, project.data.endDate)}
-    </time>
+    <div class="flex items-center gap-2 flex-wrap">
+      <time class="text-sm text-base-content/60">
+        {formatPeriod(project.data.startDate, project.data.endDate)}
+      </time>
+      {categoryLabel && (
+        <span class="badge badge-outline badge-sm">{categoryLabel}</span>
+      )}
+    </div>
     <p class="text-base-content/80">{project.data.description}</p>
     <div class="flex flex-wrap gap-2 mt-2">
       {project.data.skills.map((skill) => <SkillBadge skill={skill} />)}

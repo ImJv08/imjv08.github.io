@@ -15,6 +15,7 @@ skills:
   - Monaco Editor
   - Tailwind CSS
 demoLink: https://codetips.cloud
+category: real-projects
 ---
 ## About Code Tips
 

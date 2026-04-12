@@ -6,7 +6,7 @@ description: >-
 image: >-
   @assets/blog/guides/bloomfolio-complete-guide-building-your-portfolio/image.png
 publishDate: 2025-11-01
-updatedDate: 2026-01-11
+updatedDate: 2026-04-12
 tags:
   - Guide
   - Documentation
@@ -24,19 +24,22 @@ Bloomfolio is a configuration-driven portfolio template designed for developers,
 - **Configuration-Driven**: Customize your portfolio through a central config file
 - **6 Content Collections**: Blog, Projects, Work, Education, Hackathons, and About
 - **Type-Safe**: Full TypeScript support for content and configuration
-- **Modern Stack**: [Astro 5](https://astro.build/) + [TailwindCSS 4](https://tailwindcss.com/docs/installation/using-vite) + [DaisyUI 5](https://daisyui.com/)
+- **Modern Stack**: [Astro 6](https://astro.build/) + [TailwindCSS 4](https://tailwindcss.com/docs/installation/using-vite) + [DaisyUI 5](https://daisyui.com/)
 - **Markdoc Support**: Enhanced markdown with custom tags (Spotify, YouTube, Twitter)
 - **6 Built-in Themes**: Light, Dark, Synthwave, Retro, Valentine, Dim
 - **Responsive Design**: Mobile-first approach with DaisyUI components
 - **View Transitions**: Smooth page transitions with Astro's View Transitions API
 - **FAB Flower**: Expandable floating action button for extra links
+- **Project Categories**: Organize projects by custom categories (managed via CMS)
+- **3 Projects Page Layouts**: Grid, Horizontal Tabs, or Sidebar layout
+- **Inline Links in Hero**: Add clickable links in Hero title/description
 - **Image Optimization**: Automatic image optimization with Astro
 
 ## Tech Stack
 
 ### Core Technologies
 
-- [**Astro 5**](https://astro.build/): Modern static site generator with component islands
+- [**Astro 6**](https://astro.build/): Modern static site generator with component islands
 - [**Keystatic**](https://keystatic.com): Git-based headless CMS for content management
 - [**TailwindCSS 4**](https://tailwindcss.com/docs/installation/using-vite): Utility-first CSS framework with CSS-first configuration
 - [**DaisyUI 5**](https://daisyui.com/): Tailwind CSS component library
@@ -113,7 +116,9 @@ bloomfolio/
 │   │   ├── about/     # About section
 │   │   ├── blog/      # Blog posts
 │   │   ├── education/ # Education history
+│   │   ├── general/   # General settings
 │   │   ├── hackathons/# Hackathon entries
+│   │   ├── projectCategories/ # Project category definitions
 │   │   ├── projects/  # Portfolio projects
 │   │   └── work/      # Work experience
 │   ├── layouts/       # Page layouts
@@ -204,6 +209,46 @@ sections: {
 ```
 
 Set any section to `false` to hide it. The Hero section is always visible.
+
+### Project Categories
+
+Organize your projects into custom categories via Keystatic CMS:
+
+1. Go to `/keystatic` → **Project Categories**
+2. Create categories with: **Name**, **Description**, **Emoji Icon**, **Sort Order**
+3. When editing a project, select its category from the dropdown
+
+Three default categories are included:
+- 🤖 **AI Made** — Projects built with AI assistance
+- 🚀 **Real Projects** — Production-ready applications
+- 🧪 **Experiments** — Exploratory projects and proof of concepts
+
+On the `/projects` page, projects are grouped under their category heading. Uncategorized projects appear under an "Other" fallback section.
+
+### Projects Page Layout
+
+Choose from 3 layout styles in **General Settings** → **Projects Page Layout**:
+
+- **Grid** (default): Category sections stacked vertically with 3-column card grids
+- **Horizontal Tabs**: DaisyUI `tabs-border` — centered category tabs at the top, content below
+- **Sidebar**: DaisyUI `menu` — category sidebar on the left, 2-column card grid on the right
+
+### Inline Links in Hero
+
+Add clickable links inside the Hero section's **Title** and **Description** fields:
+
+```
+[link:<url>]visible text[/link]
+```
+
+**Example:**
+```yaml
+title: "Astro Portfolio built with [link:https://daisyui.com]🌼 DaisyUI[/link]"
+```
+
+Renders as: Astro Portfolio built with 🌼 DaisyUI (as a clickable link).
+
+This uses the `parseInlineLinks` utility (`src/utils/parseInlineLinks.ts`) which safely escapes HTML and converts the syntax to anchor tags styled with DaisyUI's `link link-primary` classes.
 
 ### Extra Links (FAB Flower)
 
@@ -307,7 +352,7 @@ Your blog post content...
 
 ### 3. Projects Collection
 
-Showcase your work and projects.
+Showcase your work and projects, organized by categories.
 
 **Location**: `src/content/projects/*.md`
 
@@ -316,6 +361,7 @@ Showcase your work and projects.
 title: "Project Name"
 description: "Brief description"
 image: "./project-screenshot.png"
+category: "real-projects"   # Category slug from Project Categories collection
 startDate: "2023-01-15"
 endDate: "2023-06-30"      # Optional (omit for ongoing)
 skills: ["React", "TypeScript", "Node.js"]
@@ -325,6 +371,8 @@ sourceLink: "https://github.com/..."    # Optional
 
 Detailed project description...
 ```
+
+**Project Categories**: Categories are managed via Keystatic CMS at `/keystatic` → **Project Categories**. Each category has a name, description, emoji icon, and sort order. Projects are grouped by category on the `/projects` page.
 
 ### 4. Work Collection
 
@@ -422,6 +470,7 @@ Main hero section with:
 - Description
 - Location
 - Social media links
+- **Inline links support**: Use `[link:<url>]text[/link]` syntax in title and description fields to add clickable links
 
 #### About.astro
 
@@ -429,7 +478,12 @@ About section displaying bio with optional photo.
 
 #### Projects.astro
 
-Projects showcase section showing all projects in a grid.
+Projects showcase section showing featured projects on the homepage.
+
+The full `/projects` page supports 3 layout styles (configurable in General Settings):
+- **Grid**: Category sections stacked with card grids (default)
+- **Horizontal Tabs**: DaisyUI tabs-border with category tabs at the top
+- **Sidebar**: DaisyUI menu sidebar on the left with projects on the right
 
 #### Blog.astro
 
@@ -474,6 +528,7 @@ Individual project card with:
 - Project image
 - Title and description
 - Date period
+- Category badge (when assigned)
 - Skills badges
 - Action buttons (Demo, Source, View)
 

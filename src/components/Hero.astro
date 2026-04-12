@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import { getIcon } from "../utils/iconMapper";
+import { parseInlineLinks } from "../utils/parseInlineLinks";
 
 interface Props {
   hero: {
@@ -48,17 +49,13 @@ const { hero } = Astro.props;
       <h1 class="text-4xl lg:text-5xl font-bold mb-4">
         Hi, I'm {hero.name}
       </h1>
-      <p class="skeleton skeleton-text text-xl text-base-content/80 mb-2">
-        {hero.title}
-      </p>
+      <p class="skeleton skeleton-text text-xl text-base-content/80 mb-2" set:html={parseInlineLinks(hero.title)} />
       {
         hero.location && (
           <p class="text-base-content/60 mb-4">{hero.location}</p>
         )
       }
-      <p class="text-lg leading-relaxed mb-6">
-        {hero.description}
-      </p>
+      <p class="text-lg leading-relaxed mb-6" set:html={parseInlineLinks(hero.description)} />
       <div
         class="grid grid-cols-4 gap-2 justify-items-center lg:flex lg:gap-4 lg:justify-start"
       >
