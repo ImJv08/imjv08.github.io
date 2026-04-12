@@ -64,6 +64,20 @@ const education = defineCollection({
     }),
 });
 
+// Project Categories collection
+const projectCategories = defineCollection({
+  loader: glob({
+    pattern: "**/*.{md,mdoc,yaml}",
+    base: "./src/content/projectCategories",
+  }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    icon: z.string().optional(),
+    sortOrder: z.number().optional().default(0),
+  }),
+});
+
 // Projects collection
 const projects = defineCollection({
   loader: glob({
@@ -73,6 +87,7 @@ const projects = defineCollection({
   schema: ({ image }) =>
     z.object({
       featured: z.boolean().optional().default(false),
+      category: z.string().optional(),
       title: z.string(),
       description: z.string(),
       image: image(),
@@ -180,6 +195,7 @@ export const collections = {
   hero,
   work,
   education,
+  projectCategories,
   projects,
   hackathons,
   blog,

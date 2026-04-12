@@ -260,6 +260,34 @@ export default config({
   },
 
   collections: {
+    projectCategories: collection({
+      label: "Project Categories",
+      path: "src/content/projectCategories/*",
+      slugField: "title",
+      format: {
+        data: "yaml",
+      },
+      schema: {
+        title: fields.slug({
+          name: { label: "Category Name" },
+        }),
+        description: fields.text({
+          label: "Description",
+          description: "Brief description of this category",
+          multiline: true,
+        }),
+        icon: fields.text({
+          label: "Icon (Emoji)",
+          description: 'An emoji icon for this category (e.g., "🚀", "🤖", "🧪")',
+        }),
+        sortOrder: fields.integer({
+          label: "Sort Order",
+          description: "Order in which this category appears on the projects page (lower = first)",
+          defaultValue: 0,
+        }),
+      },
+    }),
+
     work: collection({
       label: "Work Experience",
       path: "src/content/work/*",
@@ -364,6 +392,11 @@ export default config({
           label: "Featured Project",
           description: "Show this project on the homepage",
           defaultValue: false,
+        }),
+        category: fields.relationship({
+          label: "Category",
+          description: "Assign a category to group this project on the projects page",
+          collection: "projectCategories",
         }),
         title: fields.slug({
           name: { label: "Project Name" },

@@ -1,4 +1,6 @@
 ---
+featured: true
+category: real-projects
 title: Templix - Professional Marketplace Template
 description: >-
   A production-ready marketplace for selling templates and digital products.
@@ -14,7 +16,6 @@ skills:
   - Typescript
 demoLink: https://templix.lwg.workers.dev/
 sourceLink: https://portal.astro.build/themes/templix-professional-marketplace-template/
-featured: true
 ---
 ## Features
 

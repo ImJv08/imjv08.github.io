@@ -4,11 +4,46 @@ import { getCollection } from "astro:content";
 import ProjectCard from "../../components/ProjectCard.astro";
 
 const projects = await getCollection("projects");
+const categories = await getCollection("projectCategories");
 
-// Sort by start date, most recent first
-const sortedProjects = projects.sort(
-  (a, b) => b.data.startDate.getTime() - a.data.startDate.getTime()
+// Sort categories by sortOrder, then alphabetically
+const sortedCategories = categories.sort((a, b) => {
+  const orderA = a.data.sortOrder ?? 0;
+  const orderB = b.data.sortOrder ?? 0;
+  if (orderA !== orderB) return orderA - orderB;
+  return a.data.title.localeCompare(b.data.title);
+});
+
+// Build a map of category slug -> category data
+const categoryMap = new Map(
+  sortedCategories.map((cat) => [cat.id, cat.data])
 );
+
+// Group projects by category, sorted by startDate desc within each group
+const projectsByCategory = new Map<
+  string,
+  { title: string; description?: string; icon?: string; projects: typeof projects }
+>();
+
+for (const cat of sortedCategories) {
+  const catProjects = projects
+    .filter((p) => p.data.category === cat.id)
+    .sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
+
+  if (catProjects.length > 0) {
+    projectsByCategory.set(cat.id, {
+      title: cat.data.title,
+      description: cat.data.description,
+      icon: cat.data.icon,
+      projects: catProjects,
+    });
+  }
+}
+
+// Uncategorized projects
+const uncategorizedProjects = projects
+  .filter((p) => !p.data.category || !categoryMap.has(p.data.category))
+  .sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
 ---
 
 <Layout
@@ -45,19 +80,56 @@ const sortedProjects = projects.sort(
       </a>
     </div>
 
-    <!-- Projects Grid -->
     {
-      sortedProjects.length === 0 ? (
+      projects.length === 0 ? (
         <div class="text-center py-20">
           <p class="text-2xl text-base-content/60">
             No projects yet. Check back soon!
           </p>
         </div>
       ) : (
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedProjects.map((project) => (
-            <ProjectCard project={project} />
+        <div class="space-y-16">
+          {/* Category sections */}
+          {[...projectsByCategory.entries()].map(([_slug, category]) => (
+            <section>
+              <div class="mb-6">
+                <h2 class="text-3xl font-bold">
+                  {category.icon && <span class="mr-2">{category.icon}</span>}
+                  {category.title}
+                </h2>
+                {category.description && (
+                  <p class="text-base-content/60 mt-1">{category.description}</p>
+                )}
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {category.projects.map((project) => (
+                  <ProjectCard
+                    project={project}
+                    categoryLabel={category.title}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
+
+          {/* Uncategorized projects */}
+          {uncategorizedProjects.length > 0 && (
+            <section>
+              <div class="mb-6">
+                <h2 class="text-3xl font-bold">
+                  <span class="mr-2">📁</span>Other
+                </h2>
+                <p class="text-base-content/60 mt-1">
+                  Projects not assigned to a category.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {uncategorizedProjects.map((project) => (
+                  <ProjectCard project={project} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )
     }

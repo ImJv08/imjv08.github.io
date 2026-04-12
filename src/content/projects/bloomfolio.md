@@ -14,6 +14,7 @@ skills:
   - Typescript
 demoLink: https://bloomfolio-astro.vercel.app/
 sourceLink: https://github.com/lauroguedes/bloomfolio
+category: real-projects
 ---
 ## Overview
 
