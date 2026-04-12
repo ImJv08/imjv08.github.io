@@ -1,4 +1,6 @@
 ---
+featured: false
+category: ai-made
 title: 🌻 Bloomfolio
 description: >-
   Astro portfolio template with 🌼 Daisy UI. A modern, responsive, and
@@ -14,7 +16,6 @@ skills:
   - Typescript
 demoLink: https://bloomfolio-astro.vercel.app/
 sourceLink: https://github.com/lauroguedes/bloomfolio
-category: real-projects
 ---
 ## Overview
 

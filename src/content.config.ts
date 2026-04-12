@@ -174,6 +174,10 @@ const general = defineCollection({
     showEducationSection: z.boolean(),
     showHackathonsSection: z.boolean(),
     showContactSection: z.boolean(),
+    projectsLayout: z
+      .enum(["grid", "tabs-horizontal", "tabs-vertical"])
+      .optional()
+      .default("grid"),
   }),
 });
 

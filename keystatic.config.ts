@@ -111,6 +111,26 @@ export default config({
       label: "General Settings",
       path: "src/content/general/",
       schema: {
+        projectsLayout: fields.select({
+          label: "Projects Page Layout",
+          description:
+            "Choose the layout style for the projects listing page",
+          options: [
+            {
+              label: "Grid (default) — Category sections with card grids",
+              value: "grid",
+            },
+            {
+              label: "Horizontal Tabs — Category tabs at the top",
+              value: "tabs-horizontal",
+            },
+            {
+              label: "Sidebar — Category menu on the left side",
+              value: "tabs-vertical",
+            },
+          ],
+          defaultValue: "grid",
+        }),
         enableThemeSelector: fields.checkbox({
           label: "Enable Theme Selector",
           description: "Show theme dropdown instead of toggle switch",
