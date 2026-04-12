@@ -1,11 +1,11 @@
 name: 🌻 Bloomfolio
 title: >-
-  Astro Portfolio Template built with <a href="https://lauroguedes.dev">🌼
-  DaisyUI</a>
+  Astro Portfolio Template built with [link:https://daisyui.com]🌼
+  DaisyUI[/link]
 description: >-
-  A modern, responsive, and customizable portfolio template built with Astro and
-  DaisyUI. Perfect for developers, designers, and creatives to showcase their
-  work and skills.
+  A modern, responsive, and customizable portfolio templatebuilt with
+  [link:https://astro.build/]Astro[/link]  and DaisyUI. Perfect for developers,
+  designers, and creatives to showcase their work and skills.
 avatar: '@assets/hero/avatar.png'
 location: 🇧🇷 Brazil
 socialLinks:
