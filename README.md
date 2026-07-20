@@ -20,7 +20,7 @@ A modern, customizable portfolio template built with **Astro 6** and **DaisyUI 5
 
 - 🎨 **6 Built-in Themes** - Light, Dark, Synthwave, Retro, Valentine, and Dim
 - 📝 **6 Content Collections** - Blog, Projects, Work, Education, Hackathons, and About
-- 🎨 **Keystatic CMS** - Visual content editor with live preview and GitHub integration
+- 🎨 **Keystatic CMS** - Visual content editor with live preview, GitHub integration, and Astro 6 support
 - 🔒 **Type-Safe Content** - Full TypeScript support with validated schemas
 - 📱 **Fully Responsive** - Mobile-first design with DaisyUI components
 - ⚡ **Fast & Optimized** - Static site generation with automatic image optimization
@@ -41,8 +41,10 @@ A modern, customizable portfolio template built with **Astro 6** and **DaisyUI 5
 
 ### Prerequisites
 
-- Node.js 18+ or 20+
+- Node.js 22.12.0 or newer
 - npm, pnpm, or yarn
+
+Bloomfolio 1.4.1 uses Astro 6.4 and `@keystatic/astro` 5.2, which officially supports Astro 6.
 
 ### Installation
 
@@ -628,12 +630,12 @@ Bloomfolio works with any static hosting platform that supports Node.js builds:
 - **[DaisyUI 5](https://daisyui.com)** - Component library for Tailwind
 - **[TypeScript](https://www.typescriptlang.org/)** - Type safety
 - **[Markdoc](https://markdoc.dev/)** - Enhanced Markdown with components
-- **[Keystatic](https://keystatic.com)** - Git-based CMS for content management
+- **[Keystatic 5.2](https://keystatic.com)** - Git-based CMS with Astro 6 support
 - **[Lucide Icons](https://lucide.dev/)** - Icon library
 
 ## 📚 Documentation
 
-- **[Complete Guide](https://bloomfolio-astro.vercel.app/blog/guides/bloomfolio-complete-guide)** - Comprehensive setup and customization guide
+- **[Complete Guide](https://bloomfolio-astro.vercel.app/blog/guides/bloomfolio-complete-guide-building-your-portfolio)** - Comprehensive setup and customization guide
 - **[Content Collections Guide](https://bloomfolio-astro.vercel.app/blog/guides/content-collections-guide)** - Learn about Astro Content Collections
 - **[Markdown Guide](https://bloomfolio-astro.vercel.app/blog/guides/markdown-guide)** - Master Markdown and MDX syntax
 - **[Astro Docs](https://docs.astro.build)** - Official Astro documentation
