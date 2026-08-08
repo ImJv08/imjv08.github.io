@@ -170,12 +170,14 @@
   }
 
   .section-title {
-    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
+  background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  line-height: 1.3;
+  padding-bottom: 0.1em;
+}
 
   [data-theme="light"] .section-title {
     background: linear-gradient(135deg, #1e293b 0%, #475569 100%);

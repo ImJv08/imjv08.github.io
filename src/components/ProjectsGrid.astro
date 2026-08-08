@@ -21,9 +21,7 @@ const categoryFilters = [...new Set(allProjectsData.map((p) => p.category))].map
 }));
 
 const filters = [
-  { label: 'Featured', value: 'featured' },
-  { label: 'All', value: 'all' },
-  ...categoryFilters,
+  
 ];
 
 const projectsJson = JSON.stringify(
@@ -38,8 +36,8 @@ const projectsJson = JSON.stringify(
 <section id="projects" class="py-24 bg-slate-900/30" style="scroll-margin-top: 80px;">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10 reveal">
-      <p class="text-sm font-semibold tracking-widest text-highlight uppercase mb-3">My work</p>
-      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold section-title">Featured Projects</h2>
+      <p class="text-sm font-semibold tracking-widest text-highlight uppercase mb-3">Mis Evidencias</p>
+      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold section-title">Proyectos</h2>
     </div>
 
     <div class="flex flex-wrap justify-center gap-2 mb-10 reveal" style="transition-delay:0.1s;">
@@ -165,7 +163,7 @@ const projectsJson = JSON.stringify(
     </div>
 
     <p id="projects-empty" class="hidden text-center text-slate-600 text-sm mt-12">
-      No projects in this category yet.
+      No hay proyectos por el momento
     </p>
   </div>
 </section>

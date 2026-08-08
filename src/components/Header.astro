@@ -3,7 +3,7 @@ import personalData from '../data/personal.json';
 import menu from '../data/menu.json';
 import siteData from '../data/site.json';
 
-const { sections } = menu;
+const sections = menu.sections.filter((s: any) => s.enabled !== false);
 
 // Build external nav links from site.json definitions, skipping any whose personal.json key is empty.
 // This lets site authors add potential platforms to navExternal without requiring all fields be filled.
@@ -59,7 +59,7 @@ const external = siteData.navExternal
           <span class="slider"></span>
         </label>
 
-        <a href="#contact" class="cta-btn hidden sm:inline-flex">Contact Me</a>
+        
         <button id="menu-open-btn" class="hamburger-btn" aria-label="Open menu">
           <span></span>
           <span></span>
