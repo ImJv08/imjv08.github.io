@@ -16,7 +16,7 @@ const { title = siteData.title, description = siteData.description, ogImage } = 
 
 const siteOrigin = Astro.site?.origin ?? personalData.url;
 const canonicalURL = `${siteOrigin}${Astro.url.pathname}`;
-const resolvedOgImage = ogImage ?? `${siteOrigin}${personalData.photo}`;
+const resolvedOgImage = ogImage ?? '';
 const ogImageAlt = `${personalData.name} — ${personalData.heroRole}`;
 
 const sameAsLinks = [
@@ -89,10 +89,14 @@ function safeJsonLd(obj: object): string {
     <meta property="og:url"          content={canonicalURL} />
     <meta property="og:title"        content={title} />
     <meta property="og:description"  content={description} />
+    {resolvedOgImage && (
+  <>
     <meta property="og:image"        content={resolvedOgImage} />
     <meta property="og:image:width"  content="460" />
     <meta property="og:image:height" content="460" />
     <meta property="og:image:alt"    content={ogImageAlt} />
+  </>
+)}
     <meta property="og:site_name"    content={siteData.ogSiteName} />
     <meta property="og:locale"       content="en_US" />
 
@@ -100,8 +104,12 @@ function safeJsonLd(obj: object): string {
     <meta name="twitter:card"        content="summary_large_image" />
     <meta name="twitter:title"       content={title} />
     <meta name="twitter:description" content={description} />
+    {resolvedOgImage && (
+  <>
     <meta name="twitter:image"       content={resolvedOgImage} />
     <meta name="twitter:image:alt"   content={ogImageAlt} />
+  </>
+)}
     {personalData.twitter && <meta name="twitter:site"    content={personalData.twitter} />}
     {personalData.twitter && <meta name="twitter:creator" content={personalData.twitter} />}
 
