@@ -3,6 +3,9 @@ import Layout from "./Layout.astro";
 import { Image } from "astro:assets";
 import SkillBadge from "../components/SkillBadge.astro";
 import { ExternalLink } from "@lucide/astro";
+import ContentSidebar from "../components/ContentSidebar.astro";
+import type { MarkdownHeading } from "astro";
+import type { ResolvedContentSidebar } from "../utils/contentSidebar";
 
 interface Props {
   title: string;
@@ -13,6 +16,8 @@ interface Props {
   skills: string[];
   demoLink?: string;
   sourceLink?: string;
+  headings: MarkdownHeading[];
+  contentSidebar: ResolvedContentSidebar;
 }
 
 const {
@@ -24,7 +29,13 @@ const {
   skills,
   demoLink,
   sourceLink,
+  headings,
+  contentSidebar,
 } = Astro.props;
+const outlineHeadings = headings.filter(
+  (heading) => heading.depth >= 1 && heading.depth <= 3
+);
+const hasContentSidebar = contentSidebar.show && outlineHeadings.length > 0;
 
 function formatPeriod(startDate: Date, endDate?: Date) {
   const options: Intl.DateTimeFormatOptions = {
@@ -58,10 +69,11 @@ function calculateDuration(startDate: Date, endDate?: Date) {
 ---
 
 <Layout title={title} description={description}>
-  <article class="max-w-4xl mx-auto px-4 py-20">
-    <!-- Back button -->
-    <div class="mb-8">
-      <a href="/projects" class="btn btn-ghost btn-sm">
+  <article class="mx-auto max-w-7xl px-4 py-20">
+    <div class="mx-auto max-w-4xl">
+      <!-- Back button -->
+      <div class="mb-8">
+        <a href="/projects" class="btn btn-ghost btn-sm">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
@@ -75,15 +87,15 @@ function calculateDuration(startDate: Date, endDate?: Date) {
         >
           <path d="m15 18-6-6 6-6"></path>
         </svg>
-        Back to Projects
-      </a>
-    </div>
+          Back to Projects
+        </a>
+      </div>
 
-    <!-- Featured Image -->
-    <!-- TODO: Future Enhancement - Support multiple images/project gallery -->
-    {
-      image && (
-        <figure class="mb-8 rounded-2xl overflow-hidden">
+      <!-- Featured Image -->
+      <!-- TODO: Future Enhancement - Support multiple images/project gallery -->
+      {
+        image && (
+          <figure class="mb-8 overflow-hidden rounded-2xl">
           <Image
             src={image}
             alt={title}
@@ -91,18 +103,18 @@ function calculateDuration(startDate: Date, endDate?: Date) {
             width={1200}
             height={630}
           />
-        </figure>
-      )
-    }
+          </figure>
+        )
+      }
 
-    <!-- Project Header -->
-    <header class="mb-8">
-      <h1 class="text-5xl font-bold mb-4">{title}</h1>
-      <p class="text-xl text-base-content/70 mb-6">{description}</p>
+      <!-- Project Header -->
+      <header class="mb-8">
+        <h1 class="mb-4 text-4xl font-bold sm:text-5xl">{title}</h1>
+        <p class="mb-6 text-lg text-base-content/70 sm:text-xl">{description}</p>
 
-      <div
-        class="flex flex-wrap items-center gap-4 text-sm text-base-content/60 mb-6"
-      >
+        <div
+          class="mb-6 flex flex-wrap items-center gap-4 text-sm text-base-content/60"
+        >
         <span class="font-semibold">{formatPeriod(startDate, endDate)}</span>
         <span>•</span>
         <span>{calculateDuration(startDate, endDate)}</span>
@@ -114,12 +126,12 @@ function calculateDuration(startDate: Date, endDate?: Date) {
             </>
           )
         }
-      </div>
+        </div>
 
-      <!-- Prominent Action Buttons -->
-      {
-        (demoLink || sourceLink) && (
-          <div class="flex flex-wrap gap-3 mb-6">
+        <!-- Prominent Action Buttons -->
+        {
+          (demoLink || sourceLink) && (
+            <div class="mb-6 flex flex-wrap gap-3">
             {demoLink && (
               <a
                 href={demoLink}
@@ -150,15 +162,15 @@ function calculateDuration(startDate: Date, endDate?: Date) {
                 View Source
               </a>
             )}
-          </div>
-        )
-      }
-    </header>
+            </div>
+          )
+        }
+      </header>
 
-    <!-- Tech Stack Showcase -->
-    {
-      skills && skills.length > 0 && (
-        <div class="card bg-base-200 mb-8">
+      <!-- Tech Stack Showcase -->
+      {
+        skills && skills.length > 0 && (
+          <div class="card mb-8 bg-base-200">
           <div class="card-body">
             <h2 class="card-title text-lg mb-3">Tech Stack</h2>
             <div class="flex flex-wrap gap-2">
@@ -167,25 +179,85 @@ function calculateDuration(startDate: Date, endDate?: Date) {
               ))}
             </div>
           </div>
-        </div>
-      )
-    }
+          </div>
+        )
+      }
 
-    <!-- Divider -->
-    <div class="divider"></div>
-
-    <!-- Project Content -->
-    <div class="prose prose-lg max-w-none">
-      <slot />
+      <div class="divider"></div>
     </div>
 
-    <!-- Divider -->
-    <div class="divider mt-12"></div>
+    <div
+      class:list={[
+        "article-body-shell",
+        {
+          "article-body-shell--with-sidebar": hasContentSidebar,
+          "article-body-shell--left": hasContentSidebar && contentSidebar.position === "left",
+          "article-body-shell--right": hasContentSidebar && contentSidebar.position === "right",
+        },
+      ]}
+    >
+      {hasContentSidebar && (
+        <div class="article-outline-column">
+          <ContentSidebar
+            headings={outlineHeadings}
+            position={contentSidebar.position}
+          />
+        </div>
+      )}
 
-    <!-- Back to projects link -->
-    <div class="text-center mt-8">
-      <a href="/projects" class="btn btn-primary"> View All Projects </a>
+      <div class="article-main min-w-0">
+        <div class="article-prose prose prose-lg max-w-none">
+          <slot />
+        </div>
+
+        <div class="divider mt-12"></div>
+
+        <div class="mt-8 text-center">
+          <a href="/projects" class="btn btn-primary"> View All Projects </a>
+        </div>
+      </div>
     </div>
   </article>
 </Layout>
 
+<style>
+  .article-body-shell {
+    margin-inline: auto;
+    max-width: 56rem;
+  }
+
+  .article-body-shell--with-sidebar {
+    display: grid;
+    grid-template-areas: "outline" "content";
+    gap: 2rem;
+  }
+
+  .article-outline-column {
+    grid-area: outline;
+    min-width: 0;
+  }
+
+  .article-main {
+    grid-area: content;
+  }
+
+  :global(.article-prose :where(h1, h2)) {
+    scroll-margin-top: 2rem;
+  }
+
+  @media (min-width: 64rem) {
+    .article-body-shell--with-sidebar {
+      gap: 3rem;
+    }
+
+    .article-body-shell--right {
+      grid-template-areas: "content outline";
+      grid-template-columns: minmax(0, 1fr) 16rem;
+    }
+
+    .article-body-shell--left {
+      grid-template-areas: "outline content";
+      grid-template-columns: 16rem minmax(0, 1fr);
+    }
+  }
+</style>

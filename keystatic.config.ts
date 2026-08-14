@@ -1,6 +1,42 @@
 import { config, fields, collection, singleton } from "@keystatic/core";
 import { block } from "@keystatic/core/content-components";
 
+const contentSidebarPositionOptions = [
+  { label: "Right", value: "right" },
+  { label: "Left", value: "left" },
+] as const;
+
+const contentSidebarOverrideField = () =>
+  fields.conditional(
+    fields.checkbox({
+      label: "Override Global Content Sidebar",
+      description:
+        "Use settings for this page instead of the General Settings defaults",
+      defaultValue: false,
+    }),
+    {
+      false: fields.empty(),
+      true: fields.object(
+        {
+          show: fields.checkbox({
+            label: "Show Content Sidebar",
+            description: "Show H1/H2 links with collapsible H3 sublevels on this page",
+            defaultValue: true,
+          }),
+          position: fields.select({
+            label: "Content Sidebar Position",
+            options: contentSidebarPositionOptions,
+            defaultValue: "right",
+          }),
+        },
+        {
+          label: "Page Content Sidebar",
+          description: "These settings replace the global configuration",
+        }
+      ),
+    }
+  );
+
 export default config({
   storage: import.meta.env.PUBLIC_KEYSTATIC_GITHUB_APP_SLUG
     ? {
@@ -130,6 +166,18 @@ export default config({
             },
           ],
           defaultValue: "grid",
+        }),
+        showContentSidebar: fields.checkbox({
+          label: "Show Content Sidebar",
+          description:
+            "Show H1/H2 links with collapsible H3 sublevels on article and project pages",
+          defaultValue: true,
+        }),
+        contentSidebarPosition: fields.select({
+          label: "Content Sidebar Position",
+          description: "Choose the default side for the article content menu",
+          options: contentSidebarPositionOptions,
+          defaultValue: "right",
         }),
         enableThemeSelector: fields.checkbox({
           label: "Enable Theme Selector",
@@ -454,6 +502,7 @@ export default config({
           label: "Source Code Link",
           description: "GitHub or repository URL (optional)",
         }),
+        contentSidebar: contentSidebarOverrideField(),
         content: fields.markdoc({
           label: "Full Description",
           description: "Detailed project information",
@@ -485,6 +534,12 @@ export default config({
         contentField: "content",
       },
       schema: {
+        published: fields.checkbox({
+          label: "Published",
+          description:
+            "List this post publicly and allow visitors to open its page. Uncheck to keep it as a draft.",
+          defaultValue: true,
+        }),
         title: fields.slug({
           name: { label: "Post Title" },
         }),
@@ -513,6 +568,7 @@ export default config({
           itemLabel: (props) => props.value,
           description: "Blog post tags",
         }),
+        contentSidebar: contentSidebarOverrideField(),
         content: fields.markdoc({
           label: "Content",
           description: "Blog post content",

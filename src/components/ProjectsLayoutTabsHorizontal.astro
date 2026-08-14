@@ -22,8 +22,20 @@ interface Props {
 
 const { categoryGroups, uncategorizedProjects } = Astro.props;
 
-// Merge uncategorized into the tab list if present
+const allProjects = [
+  ...categoryGroups.flatMap((category) => category.projects),
+  ...uncategorizedProjects,
+].sort((a, b) => b.data.startDate.getTime() - a.data.startDate.getTime());
+
+// Show every project first, followed by the individual categories.
 const allTabs = [
+  {
+    slug: "_all",
+    title: "All",
+    description: "Browse every project in one place.",
+    icon: "✨",
+    projects: allProjects,
+  },
   ...categoryGroups,
   ...(uncategorizedProjects.length > 0
     ? [
@@ -61,7 +73,9 @@ const allTabs = [
           {tab.projects.map((project) => (
             <ProjectCard
               project={project}
-              categoryLabel={tab.slug !== "_other" ? tab.title : undefined}
+              categoryLabel={
+                !["_all", "_other"].includes(tab.slug) ? tab.title : undefined
+              }
             />
           ))}
         </div>
@@ -69,6 +83,5 @@ const allTabs = [
     </>
   ))}
 </div>
-
 
 

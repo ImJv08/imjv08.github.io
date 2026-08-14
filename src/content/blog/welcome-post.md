@@ -2,6 +2,7 @@
 title: "Welcome to My Blog"
 description: "An introduction to my blog where I'll share thoughts on web development, design, and technology."
 image: "@assets/blog/blog_post.jpg"
+published: true
 publishDate: "2025-10-30"
 tags: ["Introduction", "Web Development"]
 ---

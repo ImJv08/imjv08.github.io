@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 
 const hackathonEntries = await getCollection("hackathons");
 
@@ -46,9 +47,10 @@ function formatPeriod(startDate: Date, endDate?: Date) {
                 {hackathon.data.logo && (
                   <div class="avatar flex-shrink-0">
                     <div class="w-16 h-16 rounded">
-                      <img
+                      <Image
                         src={hackathon.data.logo}
                         alt={hackathon.data.title}
+                        inferSize={true}
                       />
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 ---
 import { getEntry, render } from "astro:content";
 import ProjectLayout from "../../layouts/ProjectLayout.astro";
+import { resolveContentSidebar } from "../../utils/contentSidebar";
 
 // Get the slug from params and fetch the entry
 const { slug } = Astro.params;
@@ -13,7 +14,12 @@ if (!entry) {
   return Astro.redirect("/404");
 }
 
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+const generalEntry = await getEntry("general", "index");
+const contentSidebar = resolveContentSidebar(
+  generalEntry?.data,
+  entry.data.contentSidebar
+);
 ---
 
 <ProjectLayout
@@ -25,6 +31,8 @@ const { Content } = await render(entry);
   skills={entry.data.skills}
   demoLink={entry.data.demoLink}
   sourceLink={entry.data.sourceLink}
+  headings={headings}
+  contentSidebar={contentSidebar}
 >
   <Content />
 </ProjectLayout>

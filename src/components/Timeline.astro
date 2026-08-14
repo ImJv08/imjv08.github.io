@@ -100,7 +100,7 @@ const entriesWithContent = await Promise.all(
       variant === "timeline" ? (
         <>
           <ul class="timeline timeline-vertical timeline-snap-icon">
-            {entriesWithContent.map(({ entry, Content }, index) => (
+            {entriesWithContent.map(({ entry }, index) => (
               <li>
                 {index > 0 && <hr class="bg-base-100" />}
                 <div class="timeline-middle">
@@ -144,7 +144,8 @@ const entriesWithContent = await Promise.all(
                           <p class={`text-${color} font-semibold`}>
                             {entry.data.subtitle}
                           </p>
-                          {entry.data.location && (
+                          {"location" in entry.data &&
+                            entry.data.location && (
                             <p class="text-sm text-base-content/60">
                               {entry.data.location}
                             </p>
@@ -191,7 +192,7 @@ const entriesWithContent = await Promise.all(
                     <p class={`text-${color} font-semibold`}>
                       {entry.data.subtitle}
                     </p>
-                    {entry.data.location && (
+                    {"location" in entry.data && entry.data.location && (
                       <p class="text-sm text-base-content/60">
                         {entry.data.location}
                       </p>
@@ -214,7 +215,9 @@ const entriesWithContent = await Promise.all(
                 </div>
 
                 {/* Skills */}
-                {entry.data.skills && entry.data.skills.length > 0 && (
+                {"skills" in entry.data &&
+                  entry.data.skills &&
+                  entry.data.skills.length > 0 && (
                   <div class="flex flex-wrap gap-2 mb-4">
                     {entry.data.skills.map((skill: string) => (
                       <SkillBadge skill={skill} />
@@ -253,7 +256,7 @@ const entriesWithContent = await Promise.all(
         </>
       ) : (
         <ul class="list bg-base-100 rounded-box shadow-lg">
-          {entriesWithContent.map(({ entry, Content }, index) => (
+          {entriesWithContent.map(({ entry, Content }) => (
             <li class="border-b hover:opacity-85 transition-opacity border-base-300 last:border-b-0">
               <details class="collapse">
                 <summary class="collapse-title pe-5">

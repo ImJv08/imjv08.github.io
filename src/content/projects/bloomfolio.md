@@ -19,7 +19,7 @@ sourceLink: https://github.com/lauroguedes/bloomfolio
 ---
 ## Overview
 
-Bloomfolio combines the power of modern web technologies Astro 5.x for lightning-fast static generation, Tailwind CSS 4.x for flexible styling, and DaisyUI for beautiful pre-built components to deliver an exceptional portfolio experience that's both visually stunning and technically robust.
+Bloomfolio combines Astro 7's server-rendered architecture, Tailwind CSS 4 for flexible styling, and DaisyUI 5 for polished components to deliver a portfolio experience that is both visually refined and technically robust.
 
 ## Key Features
 

@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import BlogCard from "./BlogCard.astro";
 import { ArrowRight } from "@lucide/astro";
 
-const blogEntries = await getCollection("blog");
+const blogEntries = await getCollection("blog", ({ data }) => data.published);
 
 // Sort by publish date, most recent first
 const sortedPosts = blogEntries.sort(

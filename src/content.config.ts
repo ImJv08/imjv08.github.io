@@ -2,6 +2,19 @@ import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 
+const contentSidebarSchema = z
+  .object({
+    discriminant: z.boolean(),
+    value: z
+      .object({
+        show: z.boolean().optional().default(true),
+        position: z.enum(["left", "right"]).optional().default("right"),
+      })
+      .nullable()
+      .optional(),
+  })
+  .optional();
+
 // Hero singleton
 const hero = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdoc,yaml}", base: "./src/content/hero" }),
@@ -42,7 +55,7 @@ const work = defineCollection({
       startDate: z.coerce.date(),
       endDate: z.coerce.date().optional(),
       logo: image().optional(),
-      link: z.string().url().optional(),
+      link: z.url().optional(),
       skills: z.array(z.string()).optional(),
     }),
 });
@@ -60,7 +73,7 @@ const education = defineCollection({
       startDate: z.coerce.date(),
       endDate: z.coerce.date().optional(),
       logo: image().optional(),
-      link: z.string().url().optional(),
+      link: z.url().optional(),
     }),
 });
 
@@ -94,8 +107,9 @@ const projects = defineCollection({
       startDate: z.coerce.date(),
       endDate: z.coerce.date().optional(),
       skills: z.array(z.string()),
-      demoLink: z.string().url().optional(),
-      sourceLink: z.string().url().optional(),
+      demoLink: z.url().optional(),
+      sourceLink: z.url().optional(),
+      contentSidebar: contentSidebarSchema,
     }),
 });
 
@@ -113,7 +127,7 @@ const hackathons = defineCollection({
       startDate: z.coerce.date(),
       endDate: z.coerce.date().optional(),
       logo: image().optional(),
-      sourceLink: z.string().url().optional(),
+      sourceLink: z.url().optional(),
     }),
 });
 
@@ -122,12 +136,14 @@ const blog = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdoc,yaml}", base: "./src/content/blog" }),
   schema: ({ image }) =>
     z.object({
+      published: z.boolean().optional().default(true),
       title: z.string(),
       description: z.string(),
       image: image(),
       publishDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
       tags: z.array(z.string()).optional(),
+      contentSidebar: contentSidebarSchema,
     }),
 });
 
@@ -138,7 +154,7 @@ const about = defineCollection({
     z.object({
       title: z.string(),
       photo: image().optional(),
-      link: z.string().url().optional(),
+      link: z.url().optional(),
     }),
 });
 
@@ -178,6 +194,11 @@ const general = defineCollection({
       .enum(["grid", "tabs-horizontal", "tabs-vertical"])
       .optional()
       .default("grid"),
+    showContentSidebar: z.boolean().optional().default(true),
+    contentSidebarPosition: z
+      .enum(["left", "right"])
+      .optional()
+      .default("right"),
   }),
 });
 
@@ -186,12 +207,12 @@ const contact = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdoc,yaml}", base: "./src/content/contact" }),
   schema: z.object({
     icon: z.enum(["MessageCircleCode", "Mail", "Phone"]),
-    linkUrl: z.string().url(),
+    linkUrl: z.url(),
     linkText: z.string(),
     footerIcon: z.enum(["Pickaxe", "Hammer", "Heart"]),
     footerText: z.string(),
     footerLinkText: z.string(),
-    footerLinkUrl: z.string().url(),
+    footerLinkUrl: z.url(),
   }),
 });
 

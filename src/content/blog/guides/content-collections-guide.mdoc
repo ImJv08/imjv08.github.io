@@ -1,15 +1,18 @@
 ---
+published: true
 title: Content Collections Guide
 description: >-
   Learn how to create and manage content in Bloomfolio using Keystatic CMS or
   direct file editing. Complete schemas and examples for all 6 collection types.
 image: '@assets/blog/guides/content-collections-guide/image.png'
 publishDate: 2025-11-02
-updatedDate: 2026-01-11
+updatedDate: 2026-08-14
 tags:
   - Guide
   - Content
   - Collections
+contentSidebar:
+  discriminant: false
 ---
 ## Content Management Options
 
@@ -26,6 +29,7 @@ Bloomfolio offers two ways to manage your content:
 - **No File Management**: Keystatic handles file creation and naming
 
 **Perfect for:**
+
 - Non-technical users
 - Quick content updates
 - Adding media embeds (Spotify, YouTube, Twitter)
@@ -38,6 +42,7 @@ Bloomfolio offers two ways to manage your content:
 Edit markdown files directly in `src/content/` with your code editor.
 
 **Perfect for:**
+
 - Bulk content changes
 - Version control workflows
 - Advanced markdown editing
@@ -66,7 +71,7 @@ All content lives in `src/content/` with each collection in its own folder:
 ```
 src/content/
 ├── about/        # Single about page
-├── blog/         # Blog posts (.md or .mdx)
+├── blog/         # Blog posts (.md or .mdoc)
 ├── education/    # Education history
 ├── hackathons/   # Hackathon entries
 ├── projects/     # Portfolio projects
@@ -139,13 +144,16 @@ to open source projects, or sharing knowledge through blog posts and talks.
 title: string                    # Post title
 description: string              # Brief summary (for SEO)
 image: image()                   # Featured image (relative path)
+published?: boolean             # Public when true; defaults to true
 publishDate: date                # Publication date
 updatedDate?: date              # Optional last update date
 tags?: string[]                 # Optional tags/categories
+contentSidebar?: object         # Optional per-page sidebar override
 ---
 ```
 
 **File Extensions:**
+
 - `.md` - Standard Markdown for regular blog posts
 - `.mdoc` - Markdoc with component support (required for Spotify, YouTube, Twitter embeds)
 
@@ -158,6 +166,7 @@ tags?: string[]                 # Optional tags/categories
 title: "Building Modern Web Apps with Astro"
 description: "Learn how to create fast, content-focused websites using Astro's islands architecture."
 image: "./astro-tutorial.png"
+published: true
 publishDate: "2024-01-15"
 updatedDate: "2024-01-20"
 tags: ["Astro", "Tutorial", "Web Development"]
@@ -183,6 +192,21 @@ Let's dive into creating your first Astro project...
 **Image Paths**:
 
 - Use relative paths (`./image.png`) for images in the same folder as your markdown file
+
+**Content Sidebar Override**:
+
+Blog posts inherit the global content sidebar settings by default. To replace them for one post, enable **Override Global Content Sidebar** in Keystatic or add:
+
+```yaml
+contentSidebar:
+  discriminant: true
+  value:
+    show: true
+    position: left
+```
+
+The sidebar includes H1 and H2 links, with H3 headings grouped into collapsed sublevels below their nearest H2. Use `show: false` to hide it for the page.
+
 - Images are automatically optimized by Astro
 - Supported formats: PNG, JPG, WEBP, AVIF, SVG
 
@@ -216,6 +240,7 @@ endDate?: date                  # When finished (omit for ongoing)
 skills: string[]                # Technologies used
 demoLink?: string               # Optional demo URL
 sourceLink?: string             # Optional source code URL
+contentSidebar?: object         # Optional per-page sidebar override
 ---
 ```
 
@@ -548,7 +573,7 @@ Use descriptive, URL-friendly names:
 **Good**:
 
 - `building-modern-web-apps.md`
-- `react-performance-tips.mdx`
+- `react-performance-tips.mdoc`
 - `ecommerce-platform.md`
 
 **Avoid**:
@@ -627,7 +652,7 @@ image: "./my-first-post-hero.png"
 
 If TypeScript shows errors in content:
 
-- Run `npm run astro check` to see detailed errors
+- Run `npm run check` to see detailed TypeScript, Astro, and content errors
 - Verify schema matches your frontmatter
 - Check that array fields use proper syntax: `["item1", "item2"]`
 

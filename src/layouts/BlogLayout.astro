@@ -2,6 +2,9 @@
 import Layout from './Layout.astro';
 import { Image } from 'astro:assets';
 import SkillBadge from '../components/SkillBadge.astro';
+import ContentSidebar from '../components/ContentSidebar.astro';
+import type { MarkdownHeading } from 'astro';
+import type { ResolvedContentSidebar } from '../utils/contentSidebar';
 
 interface Props {
   title: string;
@@ -10,9 +13,24 @@ interface Props {
   updatedDate?: Date;
   image: any;
   tags?: string[];
+  headings: MarkdownHeading[];
+  contentSidebar: ResolvedContentSidebar;
 }
 
-const { title, description, publishDate, updatedDate, image, tags } = Astro.props;
+const {
+  title,
+  description,
+  publishDate,
+  updatedDate,
+  image,
+  tags,
+  headings,
+  contentSidebar,
+} = Astro.props;
+const outlineHeadings = headings.filter(
+  (heading) => heading.depth >= 1 && heading.depth <= 3
+);
+const hasContentSidebar = contentSidebar.show && outlineHeadings.length > 0;
 
 function formatDate(date: Date) {
   return date.toLocaleDateString('en-US', {
@@ -29,74 +47,136 @@ const readingTime = Math.ceil(wordCount / 200); // Average reading speed: 200 wo
 ---
 
 <Layout title={title} description={description}>
-  <article class="max-w-4xl mx-auto px-4 py-20">
-    <!-- Back button -->
-    <div class="mb-8">
-      <a href="/blog" class="btn btn-ghost btn-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m15 18-6-6 6-6"/>
-        </svg>
-        Back to Blog
-      </a>
-    </div>
-
-    <!-- Featured Image -->
-    {image && (
-      <figure class="mb-8 rounded-2xl overflow-hidden">
-        <Image
-          src={image}
-          alt={title}
-          class="w-full aspect-video object-cover"
-          width={1200}
-          height={630}
-        />
-      </figure>
-    )}
-
-    <!-- Post Header -->
-    <header class="mb-8">
-      <h1 class="text-5xl font-bold mb-4">{title}</h1>
-      <p class="text-xl text-base-content/70 mb-4">{description}</p>
-
-      <div class="flex flex-wrap items-center gap-4 text-sm text-base-content/60">
-        <time datetime={publishDate.toISOString()}>
-          {formatDate(publishDate)}
-        </time>
-        <span>•</span>
-        <span>{readingTime} min read</span>
-        {updatedDate && (
-          <>
-            <span>•</span>
-            <span>Updated: {formatDate(updatedDate)}</span>
-          </>
-        )}
+  <article class="mx-auto max-w-7xl px-4 py-20">
+    <div class="mx-auto max-w-4xl">
+      <!-- Back button -->
+      <div class="mb-8">
+        <a href="/blog" class="btn btn-ghost btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+          Back to Blog
+        </a>
       </div>
 
-      {tags && tags.length > 0 && (
-        <div class="flex flex-wrap gap-2 mt-4">
-          {tags.map((tag) => (
-            <SkillBadge skill={tag} />
-          ))}
-        </div>
+      <!-- Featured Image -->
+      {image && (
+        <figure class="mb-8 overflow-hidden rounded-2xl">
+          <Image
+            src={image}
+            alt={title}
+            class="aspect-video w-full object-cover"
+            width={1200}
+            height={630}
+          />
+        </figure>
       )}
-    </header>
 
-    <!-- Divider -->
-    <div class="divider"></div>
+      <!-- Post Header -->
+      <header class="mb-8">
+        <h1 class="mb-4 text-4xl font-bold sm:text-5xl">{title}</h1>
+        <p class="mb-4 text-lg text-base-content/70 sm:text-xl">{description}</p>
 
-    <!-- Post Content -->
-    <div class="prose prose-lg max-w-none">
-      <slot />
+        <div class="flex flex-wrap items-center gap-4 text-sm text-base-content/60">
+          <time datetime={publishDate.toISOString()}>
+            {formatDate(publishDate)}
+          </time>
+          <span>•</span>
+          <span>{readingTime} min read</span>
+          {updatedDate && (
+            <>
+              <span>•</span>
+              <span>Updated: {formatDate(updatedDate)}</span>
+            </>
+          )}
+        </div>
+
+        {tags && tags.length > 0 && (
+          <div class="mt-4 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <SkillBadge skill={tag} />
+            ))}
+          </div>
+        )}
+      </header>
+
+      <div class="divider"></div>
     </div>
 
-    <!-- Divider -->
-    <div class="divider mt-12"></div>
+    <div
+      class:list={[
+        "article-body-shell",
+        {
+          "article-body-shell--with-sidebar": hasContentSidebar,
+          "article-body-shell--left": hasContentSidebar && contentSidebar.position === "left",
+          "article-body-shell--right": hasContentSidebar && contentSidebar.position === "right",
+        },
+      ]}
+    >
+      {hasContentSidebar && (
+        <div class="article-outline-column">
+          <ContentSidebar
+            headings={outlineHeadings}
+            position={contentSidebar.position}
+          />
+        </div>
+      )}
 
-    <!-- Back to blog link -->
-    <div class="text-center mt-8">
-      <a href="/blog" class="btn btn-primary">
-        View All Posts
-      </a>
+      <div class="article-main min-w-0">
+        <div class="article-prose prose prose-lg max-w-none">
+          <slot />
+        </div>
+
+        <div class="divider mt-12"></div>
+
+        <div class="mt-8 text-center">
+          <a href="/blog" class="btn btn-primary">
+            View All Posts
+          </a>
+        </div>
+      </div>
     </div>
   </article>
 </Layout>
+
+<style>
+  .article-body-shell {
+    margin-inline: auto;
+    max-width: 56rem;
+  }
+
+  .article-body-shell--with-sidebar {
+    display: grid;
+    grid-template-areas: "outline" "content";
+    gap: 2rem;
+  }
+
+  .article-outline-column {
+    grid-area: outline;
+    min-width: 0;
+  }
+
+  .article-main {
+    grid-area: content;
+  }
+
+  :global(.article-prose :where(h1, h2)) {
+    scroll-margin-top: 2rem;
+  }
+
+  @media (min-width: 64rem) {
+    .article-body-shell--with-sidebar {
+      gap: 3rem;
+    }
+
+    .article-body-shell--right {
+      grid-template-areas: "content outline";
+      grid-template-columns: minmax(0, 1fr) 16rem;
+    }
+
+    .article-body-shell--left {
+      grid-template-areas: "outline content";
+      grid-template-columns: 16rem minmax(0, 1fr);
+    }
+  }
+</style>

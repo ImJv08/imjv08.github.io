@@ -24,15 +24,15 @@ npm run preview
 # Run Astro CLI commands
 npm run astro -- <command>
 
-# Type checking
-npm run astro check
+# Type checking and content validation
+npm run check
 ```
 
 ## Architecture
 
 ### Framework & Build Setup
 
-- **Astro 5.x**: Static site generator with component islands architecture
+- **Astro 7.x**: Server-rendered web framework with component islands architecture
 - **Tailwind CSS 4.x**: Integrated via Vite plugin (`@tailwindcss/vite`)
 - **DaisyUI**: Loaded as Tailwind plugin in `src/styles/global.css`
 - **TypeScript**: Strict mode enabled via `astro/tsconfigs/strict`
@@ -132,7 +132,7 @@ Bloomfolio is designed as a portfolio website template with the following sectio
 Contact information
 
 ### Blog Page (Page + Content Loaded)
-- Format: Markdoc (`.md` files)
+- Formats: Markdown (`.md`) and Markdoc (`.mdoc`)
 - Image
 - Title
 - Publish Date
@@ -477,7 +477,7 @@ When building components or implementing features, **always use the available MC
 
 ### Blog Content Format
 
-Blog posts use Markdoc format (`.md` extension) which supports:
+Blog posts use Markdown (`.md`) or Markdoc (`.mdoc` for custom media tags), which supports:
 - Standard markdown syntax
 - Custom tags for media embeds
 - Image optimization via Astro assets

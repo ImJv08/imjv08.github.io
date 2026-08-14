@@ -5,8 +5,9 @@ description: >-
   template. Learn about Keystatic CMS, configuration, content management, and deployment.
 image: >-
   @assets/blog/guides/bloomfolio-complete-guide-building-your-portfolio/image.png
+published: true
 publishDate: 2025-11-01
-updatedDate: 2026-04-12
+updatedDate: 2026-08-14
 tags:
   - Guide
   - Documentation
@@ -16,7 +17,7 @@ tags:
 ---
 ## Introduction
 
-Bloomfolio is a configuration-driven portfolio template designed for developers, designers, and creatives. It combines the power of Astro's static site generation with the flexibility of Tailwind CSS and the beautiful components of DaisyUI.
+Bloomfolio is a configuration-driven portfolio template designed for developers, designers, and creatives. It combines Astro's server-rendered component architecture with Tailwind CSS and DaisyUI.
 
 ### Key Features
 
@@ -24,7 +25,7 @@ Bloomfolio is a configuration-driven portfolio template designed for developers,
 - **Configuration-Driven**: Customize your portfolio through a central config file
 - **6 Content Collections**: Blog, Projects, Work, Education, Hackathons, and About
 - **Type-Safe**: Full TypeScript support for content and configuration
-- **Modern Stack**: [Astro 6](https://astro.build/) + [TailwindCSS 4](https://tailwindcss.com/docs/installation/using-vite) + [DaisyUI 5](https://daisyui.com/)
+- **Modern Stack**: [Astro 7](https://astro.build/) + Vite 8 + [TailwindCSS 4](https://tailwindcss.com/docs/installation/using-vite) + [DaisyUI 5](https://daisyui.com/)
 - **Markdoc Support**: Enhanced markdown with custom tags (Spotify, YouTube, Twitter)
 - **6 Built-in Themes**: Light, Dark, Synthwave, Retro, Valentine, Dim
 - **Responsive Design**: Mobile-first approach with DaisyUI components
@@ -32,6 +33,8 @@ Bloomfolio is a configuration-driven portfolio template designed for developers,
 - **FAB Flower**: Expandable floating action button for extra links
 - **Project Categories**: Organize projects by custom categories (managed via CMS)
 - **3 Projects Page Layouts**: Grid, Horizontal Tabs, or Sidebar layout
+- **Responsive Content Sidebar**: Sticky H1/H2 navigation with collapsible H3 sublevels, global defaults, and per-page overrides
+- **Blog Drafts**: Save unfinished posts in Keystatic without listing them or exposing a public article page
 - **Inline Links in Hero**: Add clickable links in Hero title/description
 - **Image Optimization**: Automatic image optimization with Astro
 
@@ -39,7 +42,7 @@ Bloomfolio is a configuration-driven portfolio template designed for developers,
 
 ### Core Technologies
 
-- [**Astro 6**](https://astro.build/): Modern static site generator with component islands
+- [**Astro 7**](https://astro.build/): Server-rendered web framework with component islands
 - [**Keystatic**](https://keystatic.com): Git-based headless CMS for content management
 - [**TailwindCSS 4**](https://tailwindcss.com/docs/installation/using-vite): Utility-first CSS framework with CSS-first configuration
 - [**DaisyUI 5**](https://daisyui.com/): Tailwind CSS component library
@@ -58,7 +61,7 @@ Bloomfolio is a configuration-driven portfolio template designed for developers,
 
 ### Prerequisites
 
-- Node.js 18+ or 20+
+- Node.js 22.12.0 or newer (the included `.nvmrc` selects that minimum version)
 - npm, pnpm, or yarn package manager
 - Code editor (VS Code recommended)
 
@@ -230,8 +233,31 @@ On the `/projects` page, projects are grouped under their category heading. Unca
 Choose from 3 layout styles in **General Settings** → **Projects Page Layout**:
 
 - **Grid** (default): Category sections stacked vertically with 3-column card grids
-- **Horizontal Tabs**: DaisyUI `tabs-border` — centered category tabs at the top, content below
-- **Sidebar**: DaisyUI `menu` — category sidebar on the left, 2-column card grid on the right
+- **Horizontal Tabs**: DaisyUI `tabs-border` — an **All** tab followed by category tabs
+- **Sidebar**: DaisyUI `menu` — an **All** item followed by category items
+
+### Article Content Sidebar
+
+Blog posts and project detail pages automatically render an **On this page** menu from H1, H2, and H3 headings. H3 links are grouped below their nearest H2 and start collapsed; select the chevron beside an H2 to reveal the sublevel. The menu is sticky on desktop, stops at the end of the article, and uses an internal scrollbar when its maximum height is reached. On mobile, it becomes a collapsible outline above the content.
+
+Set the default behavior in **General Settings**:
+
+- **Show Content Sidebar**: shown by default
+- **Content Sidebar Position**: right by default, with left also available
+
+Every Blog Post and Project includes **Override Global Content Sidebar**. Enable it in Keystatic to replace the global visibility and position for only that page.
+
+For manual frontmatter editing:
+
+```yaml
+contentSidebar:
+  discriminant: true
+  value:
+    show: true
+    position: left
+```
+
+Omit this field to inherit the global configuration.
 
 ### Inline Links in Hero
 
@@ -342,6 +368,7 @@ Blog posts support both `.md` (standard markdown) and `.mdoc` (Markdoc with medi
 title: "Post Title"
 description: "Brief description"
 image: "./featured-image.png"
+published: true              # Set to false to keep this post as a draft
 publishDate: "2024-01-25"
 updatedDate: "2024-01-26"  # Optional
 tags: ["Tag1", "Tag2"]      # Optional
@@ -349,6 +376,8 @@ tags: ["Tag1", "Tag2"]      # Optional
 
 Your blog post content...
 ```
+
+In Keystatic, uncheck **Published** while writing. Drafts remain in the Blog Posts collection for editing, but they are excluded from public blog cards and redirect to the 404 page if someone tries to open their URL.
 
 ### 3. Projects Collection
 
@@ -482,8 +511,8 @@ Projects showcase section showing featured projects on the homepage.
 
 The full `/projects` page supports 3 layout styles (configurable in General Settings):
 - **Grid**: Category sections stacked with card grids (default)
-- **Horizontal Tabs**: DaisyUI tabs-border with category tabs at the top
-- **Sidebar**: DaisyUI menu sidebar on the left with projects on the right
+- **Horizontal Tabs**: DaisyUI tabs-border with an All tab and category tabs
+- **Sidebar**: DaisyUI menu with an All item and category items
 
 #### Blog.astro
 
@@ -643,23 +672,9 @@ npm run preview
 1. Vercel auto-detects Astro
 1. Deploy!
 
-#### Netlify
+#### Other platforms
 
-1. Connect repository
-1. Build command: `npm run build`
-1. Publish directory: `dist`
-
-#### Cloudflare Pages
-
-1. Connect repository
-1. Build command: `npm run build`
-1. Build output directory: `dist`
-
-#### GitHub Pages
-
-1. Use GitHub Actions
-1. Configure Astro for GitHub Pages
-1. Push to deploy
+Bloomfolio is configured for server rendering with `@astrojs/vercel` because Keystatic exposes on-demand routes. For another host, install its Astro 7-compatible adapter, replace the Vercel adapter in `astro.config.mjs`, and follow that host's server-rendered deployment guide.
 
 ## Troubleshooting
 
@@ -678,14 +693,14 @@ npm run preview
 ### Build errors
 
 - Run `npm install` to ensure all dependencies are installed
-- Check TypeScript errors with `npm run astro check`
+- Check TypeScript, Astro, and content errors with `npm run check`
 - Verify all content frontmatter matches schemas
 
 ### Content not appearing
 
 - Check collection name matches folder name
 - Verify frontmatter schema is correct
-- Ensure files have `.md` or `.mdx` extension
+- Ensure files have a supported `.md`, `.mdoc`, or `.yaml` extension for their collection
 
 ## Tips & Best Practices
 

@@ -1,6 +1,7 @@
 ---
 import { getEntry, render } from "astro:content";
 import BlogLayout from "../../layouts/BlogLayout.astro";
+import { resolveContentSidebar } from "../../utils/contentSidebar";
 
 // Get the slug from params and fetch the entry
 const { slug } = Astro.params;
@@ -8,12 +9,17 @@ const { slug } = Astro.params;
 // Handle the slug (could be "welcome-post" or "guides/markdown-guide")
 const entry = await getEntry("blog", slug as string);
 
-// If entry doesn't exist, return 404
-if (!entry) {
+// Missing and draft entries are never exposed on the public site.
+if (!entry || !entry.data.published) {
   return Astro.redirect("/404");
 }
 
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+const generalEntry = await getEntry("general", "index");
+const contentSidebar = resolveContentSidebar(
+  generalEntry?.data,
+  entry.data.contentSidebar
+);
 ---
 
 <BlogLayout
@@ -23,6 +29,8 @@ const { Content } = await render(entry);
   updatedDate={entry.data.updatedDate}
   image={entry.data.image}
   tags={entry.data.tags}
+  headings={headings}
+  contentSidebar={contentSidebar}
 >
   <Content />
 </BlogLayout>

@@ -9,6 +9,10 @@ import { getEntry } from "astro:content";
 
 // Load general singleton
 const generalEntry = await getEntry("general", "index");
+if (!generalEntry) {
+  throw new Error('Missing required content entry: "general/index"');
+}
+
 const general = generalEntry.data;
 
 interface Props {
