@@ -260,6 +260,7 @@ Create markdown files in `src/content/blog/`:
 title: "Post Title"
 description: "Post description"
 image: "./post-cover.png"
+published: true # Set to false to keep the post as a private draft
 publishDate: "2024-01-15"
 updatedDate: "2024-01-20" # Optional
 tags: ["Web Development", "TypeScript"] # Optional
@@ -322,7 +323,7 @@ bloomfolio/
 
 ## 🛠 Tech Stack
 
-- **Astro 5.x** - Static site generator
+- **Astro 7.x** - Server-rendered web framework with component islands
 - **Tailwind CSS 4.x** - Utility-first CSS framework
 - **DaisyUI** - Component library for Tailwind
 - **TypeScript** - Type safety
@@ -334,6 +335,7 @@ bloomfolio/
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run preview      # Preview production build
+npm run check        # Run TypeScript, Astro, and content checks
 npm run astro        # Run Astro CLI commands
 ```
 

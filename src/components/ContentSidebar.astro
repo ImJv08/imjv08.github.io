@@ -1,0 +1,203 @@
+---
+import type { MarkdownHeading } from "astro";
+import type { ContentSidebarPosition } from "../utils/contentSidebar";
+import { ChevronDown, ListTree } from "@lucide/astro";
+import ContentSidebarList from "./ContentSidebarList.astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+  position: ContentSidebarPosition;
+}
+
+const { headings, position } = Astro.props;
+---
+
+<div class="content-sidebar-shell" data-content-sidebar>
+  <details class="content-sidebar-mobile lg:hidden">
+    <summary
+      class="flex cursor-pointer list-none items-center justify-between gap-3 border-y border-base-300 py-3 font-semibold [&::-webkit-details-marker]:hidden"
+    >
+      <span class="flex items-center gap-2">
+        <ListTree class="size-4" aria-hidden="true" />
+        On this page
+      </span>
+      <ChevronDown
+        class="content-sidebar-chevron size-4 transition-transform duration-200"
+        aria-hidden="true"
+      />
+    </summary>
+    <nav
+      aria-label="On this page"
+      class="content-sidebar-scroll mt-3 max-h-72 overflow-y-auto overscroll-contain"
+    >
+      <ContentSidebarList
+        headings={headings}
+        idPrefix="content-sidebar-mobile"
+        variant="mobile"
+      />
+    </nav>
+  </details>
+
+  <aside
+    class:list={[
+      "content-sidebar-desktop sticky top-8 hidden max-h-[calc(100svh-4rem)] self-start overflow-y-auto overscroll-contain lg:block",
+      position === "right"
+        ? "border-l border-base-300 pl-5 pr-2"
+        : "border-r border-base-300 pl-2 pr-5",
+    ]}
+  >
+    <div class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-base-content/50">
+      <ListTree class="size-4" aria-hidden="true" />
+      On this page
+    </div>
+    <nav aria-label="On this page">
+      <ContentSidebarList
+        headings={headings}
+        idPrefix="content-sidebar-desktop"
+        variant="desktop"
+      />
+    </nav>
+  </aside>
+</div>
+
+<script>
+  function initContentSidebar() {
+    const shells = document.querySelectorAll<HTMLElement>("[data-content-sidebar]");
+
+    shells.forEach((shell) => {
+      if (shell.dataset.initialized === "true") return;
+      shell.dataset.initialized = "true";
+
+      const links = Array.from(
+        shell.querySelectorAll<HTMLAnchorElement>("[data-heading-slug]")
+      );
+      const slugs = [...new Set(links.map((link) => link.dataset.headingSlug))]
+        .filter((slug): slug is string => Boolean(slug));
+      const sections = slugs
+        .map((slug) => document.getElementById(slug))
+        .filter((section): section is HTMLElement => Boolean(section));
+
+      if (sections.length === 0) return;
+
+      const setToggleExpanded = (
+        toggle: HTMLButtonElement,
+        expanded: boolean
+      ) => {
+        const sublevelId = toggle.getAttribute("aria-controls");
+        const sublevel = sublevelId
+          ? document.getElementById(sublevelId)
+          : null;
+
+        if (!sublevel || !shell.contains(sublevel)) return;
+
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.setAttribute(
+          "aria-label",
+          `${expanded ? "Hide" : "Show"} sections under ${
+            toggle.closest("[data-content-sidebar-group]")
+              ?.querySelector<HTMLAnchorElement>("[data-has-sublevel]")
+              ?.textContent?.trim() ?? "this heading"
+          }`
+        );
+        sublevel.hidden = !expanded;
+      };
+
+      const expandGroupForLink = (link: HTMLAnchorElement) => {
+        const toggle = link
+          .closest<HTMLElement>("[data-content-sidebar-group]")
+          ?.querySelector<HTMLButtonElement>("[data-content-sidebar-toggle]");
+
+        if (toggle) setToggleExpanded(toggle, true);
+      };
+
+      shell
+        .querySelectorAll<HTMLButtonElement>("[data-content-sidebar-toggle]")
+        .forEach((toggle) => {
+          toggle.addEventListener("click", () => {
+            setToggleExpanded(
+              toggle,
+              toggle.getAttribute("aria-expanded") !== "true"
+            );
+          });
+        });
+
+      shell
+        .querySelectorAll<HTMLAnchorElement>("[data-has-sublevel]")
+        .forEach((link) => {
+          link.addEventListener("click", () => expandGroupForLink(link));
+        });
+
+      const setActiveHeading = (slug: string) => {
+        links.forEach((link) => {
+          const isActive = link.dataset.headingSlug === slug;
+          link.classList.toggle("is-active", isActive);
+          if (isActive) link.setAttribute("aria-current", "location");
+          else link.removeAttribute("aria-current");
+
+          if (isActive && link.dataset.headingDepth === "3") {
+            expandGroupForLink(link);
+          }
+        });
+      };
+
+      let animationFrame = 0;
+      const updateActiveHeading = () => {
+        const marker = 96;
+        let activeSection = sections[0];
+
+        sections.forEach((section) => {
+          if (section.getBoundingClientRect().top <= marker) activeSection = section;
+        });
+
+        setActiveHeading(activeSection.id);
+      };
+
+      const handleScroll = () => {
+        window.cancelAnimationFrame(animationFrame);
+        animationFrame = window.requestAnimationFrame(updateActiveHeading);
+      };
+
+      if (window.location.hash) setActiveHeading(window.location.hash.slice(1));
+      else updateActiveHeading();
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          window.cancelAnimationFrame(animationFrame);
+          window.removeEventListener("scroll", handleScroll);
+        },
+        { once: true }
+      );
+    });
+  }
+
+  document.addEventListener("astro:page-load", initContentSidebar);
+</script>
+
+<style>
+  .content-sidebar-mobile[open] .content-sidebar-chevron {
+    transform: rotate(180deg);
+  }
+
+  :global(.content-sidebar-sublevel-toggle[aria-expanded="true"] .content-sidebar-sublevel-chevron) {
+    transform: rotate(90deg);
+  }
+
+  :global(.content-sidebar-link.is-active) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .content-sidebar-scroll,
+  .content-sidebar-desktop {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, currentColor 25%, transparent) transparent;
+  }
+
+  @media (min-width: 64rem) {
+    .content-sidebar-shell {
+      height: 100%;
+    }
+  }
+</style>

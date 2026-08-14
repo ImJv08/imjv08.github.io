@@ -2,13 +2,13 @@
 
 <div align="center">
 
-A modern, customizable portfolio template built with **Astro 6** and **DaisyUI 5**. A beautiful, fast, and highly customizable portfolio template for developers, designers, and creatives.
+A modern, customizable portfolio template built with **Astro 7** and **DaisyUI 5**. A beautiful, fast, and highly customizable portfolio template for developers, designers, and creatives.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Astro](https://img.shields.io/badge/Astro-6.x-FF5D01?logo=astro&logoColor=white)](https://astro.build)
+[![Astro](https://img.shields.io/badge/Astro-7.x-FF5D01?logo=astro&logoColor=white)](https://astro.build)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![DaisyUI](https://img.shields.io/badge/DaisyUI-5.x-5A0EF8?logo=daisyui&logoColor=white)](https://daisyui.com)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 </br>
 
@@ -20,20 +20,22 @@ A modern, customizable portfolio template built with **Astro 6** and **DaisyUI 5
 
 - 🎨 **6 Built-in Themes** - Light, Dark, Synthwave, Retro, Valentine, and Dim
 - 📝 **6 Content Collections** - Blog, Projects, Work, Education, Hackathons, and About
-- 🎨 **Keystatic CMS** - Visual content editor with live preview, GitHub integration, and Astro 6 support
+- 🎨 **Keystatic CMS** - Visual content editor with live preview, GitHub integration, and Astro 7 support
 - 🔒 **Type-Safe Content** - Full TypeScript support with validated schemas
 - 📱 **Fully Responsive** - Mobile-first design with DaisyUI components
-- ⚡ **Fast & Optimized** - Static site generation with automatic image optimization
+- ⚡ **Fast & Optimized** - Server rendering with automatic image optimization
 - 🎭 **Smooth Transitions** - Page transitions using Astro's View Transitions API
-- 📦 **MDX Support** - Enhanced markdown with component imports (Spotify, YouTube, Twitter)
+- 📦 **Markdoc Support** - Enhanced markdown with custom Spotify, YouTube, and Twitter tags
 - 🎯 **Configuration-Driven** - Customize everything through a central config file
 - 🌸 **FAB Flower Menu** - Expandable floating action button for extra links (desktop)
 - 📱 **Mobile Dock Navigation** - Bottom navigation bar for mobile devices
 - ⭐ **Featured Projects** - Highlight your best work on the homepage
 - 🏷️ **Project Categories** - Organize projects by custom categories (managed via Keystatic CMS)
 - 📐 **3 Projects Page Layouts** - Grid, Horizontal Tabs, or Sidebar layout (configurable in General Settings)
+- 🧭 **Content Sidebar** - Sticky H1/H2 article navigation with collapsible H3 sublevels, global defaults, per-page overrides, and a responsive mobile outline
+- 📝 **Blog Drafts** - Keep unfinished posts in Keystatic without listing them or exposing their public page
 - 🔗 **Inline Links in Hero** - Add clickable links inside Hero title and description using `[link:<url>]text[/link]` syntax
-- 🎨 **Modern Stack** - Astro 6 + Tailwind CSS 4 + DaisyUI 5 + TypeScript
+- 🎨 **Modern Stack** - Astro 7 + Vite 8 + Tailwind CSS 4 + DaisyUI 5 + TypeScript 6
 - 🔍 **SEO Optimized** - Meta tags, Open Graph, and semantic HTML
 - ♿ **Accessible** - Built with accessibility in mind
 
@@ -44,7 +46,9 @@ A modern, customizable portfolio template built with **Astro 6** and **DaisyUI 5
 - Node.js 22.12.0 or newer
 - npm, pnpm, or yarn
 
-Bloomfolio 1.4.1 uses Astro 6.4 and `@keystatic/astro` 5.2, which officially supports Astro 6.
+Astro 7 requires Node.js 22.12.0 or newer. The included `.nvmrc` selects that minimum version, and `@keystatic/astro` 5.2 declares Astro 7 compatibility.
+
+Astro 7 uses Vite 8 and its stricter Rust compiler. Run `npm run check` and `npm run build` after changing components or content to catch invalid templates and schema errors.
 
 ### Installation
 
@@ -74,7 +78,7 @@ All commands are run from the root of the project:
 | `npm run dev` | Start dev server at `localhost:4321` |
 | `npm run build` | Build production site to `./dist/` |
 | `npm run preview` | Preview production build locally |
-| `npm run astro check` | Run TypeScript and Astro checks |
+| `npm run check` | Run TypeScript, Astro, and content checks |
 | `npm run astro ...` | Run Astro CLI commands |
 
 ## ⚙️ Configuration
@@ -89,6 +93,7 @@ All site configuration is managed through **Keystatic CMS** or by editing conten
    - Theme selector (dropdown vs toggle)
    - Section visibility
    - Extra links (FAB & Dock)
+   - Content sidebar visibility and left/right position
 
 ### Section Visibility
 
@@ -123,8 +128,29 @@ Choose from 3 layout styles for the projects listing page in **General Settings*
 | Layout | Description |
 | :--- | :--- |
 | **Grid** (default) | Stacked category sections with card grids |
-| **Horizontal Tabs** | DaisyUI `tabs-border` with category tabs at the top |
-| **Sidebar** | DaisyUI `menu` sidebar on the left with content area on the right |
+| **Horizontal Tabs** | DaisyUI `tabs-border` with an **All** tab followed by category tabs |
+| **Sidebar** | DaisyUI `menu` with an **All** item followed by category items |
+
+### Content Sidebar
+
+Blog posts and project detail pages automatically build an **On this page** menu from H1, H2, and H3 headings. H3 links are grouped beneath their nearest H2 and start collapsed; use the chevron beside an H2 to reveal them. On desktop the menu stays sticky beside the article and scrolls internally when it reaches its maximum height. On mobile it becomes a compact, collapsible outline above the content.
+
+Configure the defaults in **General Settings**:
+
+- **Show Content Sidebar**: enabled by default
+- **Content Sidebar Position**: `right` by default; `left` is also available
+
+Each Blog Post and Project includes **Override Global Content Sidebar** in Keystatic. Enable it to replace both global values for that page. When editing files manually, use:
+
+```yaml
+contentSidebar:
+  discriminant: true
+  value:
+    show: true
+    position: left
+```
+
+Omit `contentSidebar` to use the global settings.
 
 ### Inline Links in Hero
 
@@ -200,7 +226,7 @@ bloomfolio/
 │   │   └── YouTube.astro
 │   ├── content/        # Content collections
 │   │   ├── about/     # About section (1 file)
-│   │   ├── blog/      # Blog posts (.md or .mdx)
+│   │   ├── blog/      # Blog posts (.md or .mdoc)
 │   │   ├── education/ # Education history
 │   │   ├── general/   # General settings
 │   │   ├── hackathons/# Hackathon entries
@@ -272,7 +298,7 @@ Keystatic is a **Git-based CMS** that:
 - **About Section** - Personal bio with photo (supports Markdown)
 
 **Collections** (multiple entries):
-- **Blog Posts** - Articles with cover images, tags, and rich media embeds
+- **Blog Posts** - Published articles and unlisted drafts with cover images, tags, and rich media embeds
 - **Projects** - Portfolio items with screenshots, descriptions, and tech stacks
 - **Work Experience** - Timeline of employment history
 - **Education** - Academic background
@@ -283,6 +309,7 @@ Keystatic is a **Git-based CMS** that:
 1. **Create New Entries**
    - Click "Create entry" in any collection
    - Fill out the form fields (Keystatic validates required fields)
+   - For Blog Posts, leave **Published** unchecked until the article is ready
    - Use the rich text editor for Markdown content
    - Upload images directly through the interface
 
@@ -329,12 +356,15 @@ Create a new file in `src/content/blog/`:
 title: "Your Post Title"
 description: "Brief description for SEO"
 image: "./featured-image.png"
+published: true
 publishDate: "2024-01-25"
 tags: ["Tag1", "Tag2"]
 ---
 
 Your content here...
 ```
+
+Set `published: false` to keep the article as a draft. Drafts remain editable in Keystatic but are excluded from the homepage, the Blog page, and direct public access.
 
 **File Extensions:**
 - `.md` - Standard Markdown for regular blog posts
@@ -601,43 +631,26 @@ Output is generated in `dist/` directory.
 2. Vercel auto-detects Astro
 3. Deploy!
 
-### Deploy to Netlify
-
-1. Connect your repository
-2. Build command: `npm run build`
-3. Publish directory: `dist`
-
-### Deploy to Cloudflare Pages
-
-1. Connect your repository
-2. Build command: `npm run build`
-3. Build output directory: `dist`
-
 ### Other Platforms
 
-Bloomfolio works with any static hosting platform that supports Node.js builds:
-- GitHub Pages
-- AWS S3 + CloudFront
-- Firebase Hosting
-- Render
-- Railway
+Bloomfolio uses `output: "server"` with `@astrojs/vercel` because Keystatic needs on-demand routes. To deploy elsewhere, install that platform's Astro 7-compatible adapter, replace the Vercel adapter in `astro.config.mjs`, and follow the platform's server-rendered deployment instructions.
 
 ## 🛠️ Tech Stack
 
-- **[Astro 6](https://astro.build)** - Static site generator
+- **[Astro 7](https://astro.build)** - Server-rendered web framework with component islands
 - **[Tailwind CSS 4](https://tailwindcss.com)** - Utility-first CSS framework
 - **[Tailwind Typography](https://tailwindcss.com/docs/typography-plugin)** - Beautiful prose styling
 - **[DaisyUI 5](https://daisyui.com)** - Component library for Tailwind
 - **[TypeScript](https://www.typescriptlang.org/)** - Type safety
 - **[Markdoc](https://markdoc.dev/)** - Enhanced Markdown with components
-- **[Keystatic 5.2](https://keystatic.com)** - Git-based CMS with Astro 6 support
+- **[Keystatic](https://keystatic.com)** - Git-based CMS with Astro 7 support
 - **[Lucide Icons](https://lucide.dev/)** - Icon library
 
 ## 📚 Documentation
 
 - **[Complete Guide](https://bloomfolio-astro.vercel.app/blog/guides/bloomfolio-complete-guide-building-your-portfolio)** - Comprehensive setup and customization guide
 - **[Content Collections Guide](https://bloomfolio-astro.vercel.app/blog/guides/content-collections-guide)** - Learn about Astro Content Collections
-- **[Markdown Guide](https://bloomfolio-astro.vercel.app/blog/guides/markdown-guide)** - Master Markdown and MDX syntax
+- **[Markdown Guide](https://bloomfolio-astro.vercel.app/blog/guides/markdown-guide)** - Master Markdown and Markdoc syntax
 - **[Astro Docs](https://docs.astro.build)** - Official Astro documentation
 - **[Tailwind CSS Docs](https://tailwindcss.com/docs)** - Tailwind CSS documentation
 - **[DaisyUI Docs](https://daisyui.com/docs)** - DaisyUI component documentation
