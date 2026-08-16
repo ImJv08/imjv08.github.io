@@ -508,3 +508,28 @@ body.page-hidden * {
     display: none !important;
   }
 }
+
+.hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.hero-circle-photo {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  order: 2;
+}
+
+@media (max-width: 480px) {
+  .hero-circle-photo {
+    width: 90px;
+    height: 90px;
+
+  }
+}

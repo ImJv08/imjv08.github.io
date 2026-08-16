@@ -7,14 +7,6 @@
       "href": "#projects",
       "desc": "Código y repositorios",
       "enabled": true
-    },
-
-    {
-      "label": "Portafolio",
-      "shortLabel": "Portafolio",
-      "href": "#portfolio",
-      "desc": "Vista general de mi trabajo",
-      "enabled": true
     }
   ]
 }
