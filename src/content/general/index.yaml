@@ -1,8 +1,8 @@
 projectsLayout: tabs-horizontal
 showContentSidebar: true
 contentSidebarPosition: right
-enableThemeSelector: true
-extraLinksEnabled: true
+enableThemeSelector: false
+extraLinksEnabled: false
 extraLinks:
   - link: /blog/guides/bloomfolio-complete-guide-building-your-portfolio
     icon: Flower2

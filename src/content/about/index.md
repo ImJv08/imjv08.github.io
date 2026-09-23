@@ -1,8 +1,10 @@
 ---
-title: About Me
-photo: '@assets/about/photo.png'
-link: https://linkedin.com/in/lauroguedes
+title: Sobre mi
+photo: '@assets/about/Foto JV.jpeg'
+link: https://youtu.be/ucW86q8PeYE?si=XuzgagDuw_KAeAQq
 ---
-My toolkit revolves around the **Laravel and Vue JS** ecosystem. I enjoy crafting everything from robust APIs and full-stack applications to open-source tools like the [Mary UI Laravel Starter Kit](https://github.com/lauroguedes/mary-ui-starter-kit) and [Bloomfolio](https://github.com/lauroguedes/bloomfolio), an Astro portfolio template that's been forked dozens of times.
+Soy una estudiante universitaria cursando la carrera de Ingenieria de Sistema en 5to Semestre. Construyo
+aplicaciones con Java, Spring Boot y Angular, adicionalmente, tengo conocimientos utilizando bases de datos
+relacionales como PostgreSQL y MySQL. 
 
-When I'm not coding, I'm probably exploring AI art, traveling, or listening to 🎸 heavy music way too loud.
+Siempre estoy buscando aprender y mejorar mis habilidades :D

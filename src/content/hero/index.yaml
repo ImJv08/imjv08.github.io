@@ -1,4 +1,4 @@
-name: 🌻 Bloomfolio
+name: Juana Aldana
 title: >-
   Astro Portfolio Template built with [link:https://daisyui.com]🌼
   DaisyUI[/link]
@@ -7,7 +7,7 @@ description: >-
   [link:https://astro.build/]Astro[/link]  and DaisyUI. Perfect for developers,
   designers, and creatives to showcase their work and skills.
 avatar: '@assets/hero/avatar.png'
-location: 🇧🇷 Brazil
+location: Colombia
 socialLinks:
   - url: mailto:hello@example.com
     icon: Email

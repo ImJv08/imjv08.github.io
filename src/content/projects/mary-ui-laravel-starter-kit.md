@@ -15,8 +15,6 @@ skills:
   - DaisyUI
   - Tailwind CSS
   - Pest
-demoLink: https://github.com/lauroguedes/mary-ui-starter-kit
-sourceLink: https://github.com/lauroguedes/mary-ui-starter-kit
 featured: true
 category: real-projects
 ---
@@ -94,24 +92,11 @@ Powered by **Spatie Laravel Permission** package for robust role-based access co
 
 ### Development Workflow
 
-Quick setup with one command:
-
-```bash
-laravel new my-app --using=lauroguedes/mary-ui-starter-kit
-```
-
-Or clone and install:
-
-```bash
-composer install
-npm install
-php artisan migrate --seed
-```
-
-Start development with hot reload:
-
-```bash
-composer dev
+```sql
+SELECT e.first_name, e.salary
+FROM employees e
+WHERE e.salary > 5000
+ORDER BY e.salary DESC;
 ```
 
 This launches the development server, queue worker, log monitor, and Vite with hot module replacement - all concurrently!

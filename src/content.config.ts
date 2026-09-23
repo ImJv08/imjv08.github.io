@@ -107,8 +107,6 @@ const projects = defineCollection({
       startDate: z.coerce.date(),
       endDate: z.coerce.date().optional(),
       skills: z.array(z.string()),
-      demoLink: z.url().optional(),
-      sourceLink: z.url().optional(),
       contentSidebar: contentSidebarSchema,
     }),
 });
