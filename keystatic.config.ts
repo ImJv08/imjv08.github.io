@@ -20,7 +20,7 @@ const contentSidebarOverrideField = () =>
         {
           show: fields.checkbox({
             label: "Show Content Sidebar",
-            description: "Show H1/H2 links with collapsible H3 sublevels on this page",
+            description: "Show H1/H2 links with collapsible H3 sublevels En esta sección",
             defaultValue: true,
           }),
           position: fields.select({

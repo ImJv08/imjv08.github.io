@@ -21,6 +21,15 @@ const sortedCategories = categories.sort((a, b) => {
   return a.data.title.localeCompare(b.data.title);
 });
 
+// TEMPORAL: mostrar qué ID está leyendo Astro
+console.log(
+  "CATEGORIAS:",
+  sortedCategories.map((cat) => ({
+    id: cat.id,
+    title: cat.data.title,
+  }))
+);
+
 // Build a map of category slug -> category data
 const categoryMap = new Map(
   sortedCategories.map((cat) => [cat.id, cat.data])
@@ -60,16 +69,16 @@ const uncategorizedProjects = projects
 ---
 
 <Layout
-  title="Projects - Bloomfolio"
+  title="EVIDENCIAS"
   description="Explore my latest projects and work"
 >
   <main class="max-w-6xl mx-auto px-4 py-20">
     <!-- Header -->
     <div class="text-center mb-16">
-      <h1 class="text-5xl font-bold mb-4">Projects</h1>
+      <h1 class="text-5xl font-bold mb-4">EVIDENCIAS</h1>
       <p class="text-xl text-base-content/70">
-        A collection of projects I've worked on, showcasing my skills and
-        experience.
+        La recompilacion de ejercicios que se han realizado tanto en clase
+        como de manera personal.
       </p>
     </div>
 
@@ -89,7 +98,7 @@ const uncategorizedProjects = projects
         >
           <path d="m15 18-6-6 6-6"></path>
         </svg>
-        Back to Home
+        Volver
       </a>
     </div>
 

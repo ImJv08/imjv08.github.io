@@ -19,7 +19,7 @@ const { headings, position } = Astro.props;
     >
       <span class="flex items-center gap-2">
         <ListTree class="size-4" aria-hidden="true" />
-        On this page
+        En esta sección
       </span>
       <ChevronDown
         class="content-sidebar-chevron size-4 transition-transform duration-200"
@@ -27,7 +27,7 @@ const { headings, position } = Astro.props;
       />
     </summary>
     <nav
-      aria-label="On this page"
+      aria-label="En esta sección"
       class="content-sidebar-scroll mt-3 max-h-72 overflow-y-auto overscroll-contain"
     >
       <ContentSidebarList
@@ -48,9 +48,9 @@ const { headings, position } = Astro.props;
   >
     <div class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-base-content/50">
       <ListTree class="size-4" aria-hidden="true" />
-      On this page
+      En esta sección
     </div>
-    <nav aria-label="On this page">
+    <nav aria-label="En esta sección">
       <ContentSidebarList
         headings={headings}
         idPrefix="content-sidebar-desktop"

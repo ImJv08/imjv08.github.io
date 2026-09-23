@@ -133,7 +133,7 @@ Choose from 3 layout styles for the projects listing page in **General Settings*
 
 ### Content Sidebar
 
-Blog posts and project detail pages automatically build an **On this page** menu from H1, H2, and H3 headings. H3 links are grouped beneath their nearest H2 and start collapsed; use the chevron beside an H2 to reveal them. On desktop the menu stays sticky beside the article and scrolls internally when it reaches its maximum height. On mobile it becomes a compact, collapsible outline above the content.
+Blog posts and project detail pages automatically build an **En esta sección** menu from H1, H2, and H3 headings. H3 links are grouped beneath their nearest H2 and start collapsed; use the chevron beside an H2 to reveal them. On desktop the menu stays sticky beside the article and scrolls internally when it reaches its maximum height. On mobile it becomes a compact, collapsible outline above the content.
 
 Configure the defaults in **General Settings**:
 
@@ -299,7 +299,7 @@ Keystatic is a **Git-based CMS** that:
 
 **Collections** (multiple entries):
 - **Blog Posts** - Published articles and unlisted drafts with cover images, tags, and rich media embeds
-- **Projects** - Portfolio items with screenshots, descriptions, and tech stacks
+- **Projects** - Portfolio items with screenshots, descriptions, and Tecnologías Utilizadass
 - **Work Experience** - Timeline of employment history
 - **Education** - Academic background
 - **Hackathons** - Competitive coding events and achievements
@@ -635,7 +635,7 @@ Output is generated in `dist/` directory.
 
 Bloomfolio uses `output: "server"` with `@astrojs/vercel` because Keystatic needs on-demand routes. To deploy elsewhere, install that platform's Astro 7-compatible adapter, replace the Vercel adapter in `astro.config.mjs`, and follow the platform's server-rendered deployment instructions.
 
-## 🛠️ Tech Stack
+## 🛠️ Tecnologías Utilizadas
 
 - **[Astro 7](https://astro.build)** - Server-rendered web framework with component islands
 - **[Tailwind CSS 4](https://tailwindcss.com)** - Utility-first CSS framework

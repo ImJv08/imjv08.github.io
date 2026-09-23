@@ -61,7 +61,7 @@ Keystatic organizes content into **Singletons** (single items) and **Collections
 
 **Collections:**
 - **Blog** - Blog posts with rich media support
-- **Projects** - Portfolio projects with images and tech stacks
+- **Projects** - Portfolio projects with images and Tecnologías Utilizadass
 - **Work** - Work experience timeline
 - **Education** - Academic history
 - **Hackathons** - Hackathon participation
@@ -321,7 +321,7 @@ bloomfolio/
 └── package.json
 ```
 
-## 🛠 Tech Stack
+## 🛠 Tecnologías Utilizadas
 
 - **Astro 7.x** - Server-rendered web framework with component islands
 - **Tailwind CSS 4.x** - Utility-first CSS framework

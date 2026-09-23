@@ -1,7 +1,7 @@
 projectsLayout: tabs-horizontal
 showContentSidebar: true
 contentSidebarPosition: right
-enableThemeSelector: false
+enableThemeSelector: true
 extraLinksEnabled: false
 extraLinks:
   - link: /blog/guides/bloomfolio-complete-guide-building-your-portfolio
