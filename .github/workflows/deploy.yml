@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -18,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Build Astro site
+      - name: Build and upload
         uses: withastro/action@v5
 
   deploy:
