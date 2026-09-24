@@ -124,10 +124,94 @@ cláusula ON y luego en la cláusula WHERE.
 - Deben registrar el conteo de filas de cada variante y enunciar en una sola frase la regla general
 que se deriva de la diferencia.
 
+**ANÁLISIS DEL EJERCICIO**
+
+Este ejercicio es diferente a los anteriores, ya que en esta ocasión se piden analizar dos situaciones diferentes, con las columnas "variante", "filas_devueltas" y explicacion:
+
+- **Filtro del salario en la clausula ON**
+
+Lo que se filtre en la clausula ON se aplica durante la reunion (En este caso en el LEFT JOIN), lo que causa que se conserven algunas filas aunque no cumplan la condición, que en este caso, incluiria los departamentos aunque no tengan empleados con salario superior a 1000.
+
+```sql
+SELECT 'CONDICIÓN EN ON' AS variante,
+       COUNT(*) AS filas_devueltas,
+       'El filtro de salario se aplica durante la reunión, por lo que el LEFT JOIN conserva los departamentos aunque no tengan empleados con salario superior a 10000.' AS explicacion
+FROM HR.DEPARTMENTS D
+LEFT JOIN HR.EMPLOYEES E
+       ON E.DEPARTMENT_ID = D.DEPARTMENT_ID
+      AND E.SALARY > 10000;
+```
+
+En este caso, el numero de filas que se obtuvieron al hacer esta consulta es de **36**.
+
+- **Filtro del salario en la clausula WHERE**
+
+Lo que se filtre en la clausula WHERE se aplica después de la reunión, lo que significa que, en esta ocasión no se conservan las filas donde el empleado no cumpla con la condición, pudiendo eliminar departamentos que se habian obtenido por el LEFT JOIN. Esto basicamente hace que el LEFT JOIN se convierta en un INNER JOIN.
+
+```sql
+SELECT 'CONDICIÓN EN WHERE' AS variante,
+       COUNT(*) AS filas_devueltas,
+       'El filtro de salario se aplica después de la reunión, por lo que elimina las filas donde el empleado no cumple la condición y puede eliminar departamentos conservados por el LEFT JOIN.' AS explicacion
+FROM HR.DEPARTMENTS D
+LEFT JOIN HR.EMPLOYEES E
+       ON E.DEPARTMENT_ID = D.DEPARTMENT_ID
+WHERE E.SALARY > 10000;
+```
+En este caso, el número de filas que se obtuvieron al hacer esta consulta es de **15**.
+
+### Ejercicio 6.5: Diagnóstico de nulos y compensación total
+
+**Columnas obligatorias:** employee_id, last_name, department_id, salary, commission_pct,
+total_compensation, es_jefe
+
+- total_compensation no puede ser nulo para ningún empleado.
+- es_jefe debe indicar explícitamente SI o NO y resolverse con NOT EXISTS.
+- El comentario debe explicar por qué la versión con NOT IN sobre la subconsulta de manager_id
+devuelve el conjunto vacío, y por qué NOT EXISTS no presenta ese comportamiento.
+
+**ANÁLISIS DEL EJERCICIO**
+
+Para el desarrollo de esta consulta, en primer lugar habia que obtener las 7 columnas obligatorias, de las cuales 2 tienen pautas importantes:
+- **total_compensation:** En esta columna se pide calcular la compensación total de un empleado, para lo cual se necesita sumar su salario base más su comición. Para hacerlo se tuvo que utilizar la funcion **NVL()** la cual me ayudó a tener un control con las comiciones nulas de algunos empleados.
+- **es_jefe:** En esta columna se pide identificar si el empleado es jefe o no. Para esto utilicé la estructura **CASE ... END**, la cual ya había utilizado en uno de los ejercicios anteriores; pero en esta ocasión agregué la cláusula **WHEN NOT EXISTS**, la cual me ayudó a identificar mediante una subconsulta a aquellos empleados que no tienen a nadie a su cargo (marcándolos como 'NO') y a los que sí (marcándolos como 'SI').
+
+**CONSULTA DEL EJERCICIO**
+
+```sql
+SELECT E.EMPLOYEE_ID,
+       E.LAST_NAME,
+       D.DEPARTMENT_ID,
+       E.SALARY,
+       E.COMMISSION_PCT,
+       E.SALARY + (E.SALARY * NVL(E.COMMISSION_PCT,0)) AS TOTAL_COMPENSATION,
+       CASE
+          WHEN NOT EXISTS (
+             SELECT 1
+             FROM HR.EMPLOYEES M
+             WHERE M.MANAGER_ID = E.EMPLOYEE_ID
+          ) THEN 'NO'
+          ELSE 'SI'
+          END AS ES_JEFE
+FROM HR.EMPLOYEES E
+LEFT JOIN HR.DEPARTMENTS D
+ON E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+```
+
+**PREGUNTAS DEL EJERCICIO**
+
+- ¿Por qué NOT IN devuelve el conjunto vacio?
+
+Porque en la lista de jefes que devuelve la subconsulta hay un valor NULL. Si se intenta comparar algo con un valor vacío en SQL usando NOT IN, el sistema se "confunde", anula esa condición (la deja vacía) y salta directamente al ELSE, marcando a todos los empleados como 'SI'.
+
+- ¿Por qué NOT EXISTS no presenta ese comportamiento?
+
+Porque NOT EXISTS no se fija en los valores, sino si la subconsulta encuentra o no empleados que cumplan con la condición, lo que significa que si el valor es NULL no sucede la confución, ya que lo tomara como que no cumple la condición.
 
 ## PARTE 2. Depuración de consultas defectuosas
-## Script del taller solucionado
+## Scripts del taller solucionado
 
-Aquí puedes descargar el script SQL con la solucion de los puntos explicados del taller.
+- Aquí puedes descargar el script SQL con la solucion de los puntos de la primera parte del taller.
 
-[📥 Descargar script SQL](/downloads/Ejercicios_SQLAvanzado.sql)
+  [📥 Descargar primera parte](/downloads/Ejercicios_SQLAvanzado.sql)
+
+- Aquí puedes descargar el script SQL con la solución de los puntos de la segunda parte del taller.

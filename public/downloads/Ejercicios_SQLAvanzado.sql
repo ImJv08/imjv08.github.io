@@ -38,6 +38,27 @@ ON E.JOB_ID = J.JOB_ID
 LEFT JOIN HR.DEPARTMENTS D
 ON E.DEPARTMENT_ID = D.DEPARTMENT_ID;
 
+--Ejercicio 6.4--
+
+--CONDICIÓN EN ON
+SELECT 'CONDICIÓN EN ON' AS variante,
+       COUNT(*) AS filas_devueltas,
+       'El filtro de salario se aplica durante la reunión, por lo que el LEFT JOIN conserva los departamentos aunque no tengan empleados con salario superior a 10000.' AS explicacion
+FROM HR.DEPARTMENTS D
+LEFT JOIN HR.EMPLOYEES E
+       ON E.DEPARTMENT_ID = D.DEPARTMENT_ID
+      AND E.SALARY > 10000;
+
+--CONDICION EN WHERE
+
+SELECT 'CONDICIÓN EN WHERE' AS variante,
+       COUNT(*) AS filas_devueltas,
+       'El filtro de salario se aplica después de la reunión, por lo que elimina las filas donde el empleado no cumple la condición y puede eliminar departamentos conservados por el LEFT JOIN.' AS explicacion
+FROM HR.DEPARTMENTS D
+LEFT JOIN HR.EMPLOYEES E
+       ON E.DEPARTMENT_ID = D.DEPARTMENT_ID
+WHERE E.SALARY > 10000;
+
 --Ejercicio 6.5--
 SELECT E.EMPLOYEE_ID,
        E.LAST_NAME,
@@ -47,9 +68,8 @@ SELECT E.EMPLOYEE_ID,
        E.SALARY + (E.SALARY * NVL(E.COMMISSION_PCT,0)) AS TOTAL_COMPENSARTION,
        CASE
           WHEN NOT EXISTS (
-             SELECT 1
-             FROM HR.EMPLOYEES M
-             WHERE M.MANAGER_ID = E.EMPLOYEE_ID
+             SELECT M.MANAGER_ID 
+               FROM HR.EMPLOYEES M
           )
           THEN 'NO'
           ELSE 'SI'
@@ -228,7 +248,61 @@ SELECT E.EMPLOYEE_ID,
                         
 FROM HR.EMPLOYEES E;
 
--- Ejercico 6.11 --
+-- Ejercicio 6.10 --
+
+SELECT employee_id,
+       last_name,
+       department_id,
+       salary,
+
+       ROW_NUMBER() OVER (
+           PARTITION BY department_id
+           ORDER BY salary DESC
+       ) AS rn,
+
+       RANK() OVER (
+           PARTITION BY department_id
+           ORDER BY salary DESC
+       ) AS rk,
+
+       DENSE_RANK() OVER (
+           PARTITION BY department_id
+           ORDER BY salary DESC
+       ) AS drk,
+
+       LAG(salary, 1, salary) OVER (
+           PARTITION BY department_id
+           ORDER BY hire_date
+       ) AS prev_salary,
+
+       salary -
+       LAG(salary, 1, salary) OVER (
+           PARTITION BY department_id
+           ORDER BY hire_date
+       ) AS delta_prev,
+
+       SUM(salary) OVER (
+           PARTITION BY department_id
+           ORDER BY hire_date
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+       ) AS salary_running_total,
+
+       AVG(salary) OVER (
+           PARTITION BY department_id
+       ) AS dept_avg_salary,
+
+       ROUND(
+           100 * salary /
+           AVG(salary) OVER (
+               PARTITION BY department_id
+           ),
+           2
+       ) AS pct_vs_dept_avg
+
+FROM HR.EMPLOYEES
+ORDER BY department_id, hire_date;
+
+-- Ejercicio 6.11 --
 
 SELECT *
 FROM ( SELECT D.DEPARTMENT_ID,
