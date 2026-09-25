@@ -762,6 +762,191 @@ FROM HR.EMPLOYEES E;
 
 Mientras que **NULL = NULL** nunca devuelve True, sino **UNKNOWN**, las operaciones de conjunto (como INTERSECT, UNION Y MINUS) **pueden considerar dos valores NULL como iguales** al comparar las filas. Por esto, para comprobar si un valor es nulo se debe utilizar **IS NULL** y no el operador de igualdad.
 
+### Ejercicio 6.9: Jerarquía organizacional
+
+**Columnas obligatorias:** employee_id, last_name, manager_id, nivel, ruta_jerarquica
+- Debe construirse con una expresión común de tabla recursiva, con caso base en el empleado
+sin jefe.
+- ruta_jerarquica debe mostrar la cadena de apellidos desde la raíz hasta el empleado.
+- El comentario debe identificar el caso base y el paso recursivo, explicar qué ocurre si UNION
+ALL se reemplaza por UNION y cómo se controlaría un ciclo en los datos.
+
+**ANÁLISIS DEL EJERCICIO**
+
+Para realizar esta consulta, en primer lugar se tuvo que entender lo que es una **CTE Recursiva**, la cual es una expresión común de tabla que puede consultarse a si misma. En este ejercicio se utilizó para representar la jerarquia de los empleados, teniendo como **caso base** el empleado que no tenga un manager asociado **(MANAGER_ID IS NULL)** para que, apartir de ahi se recorran sus subordinados. En cada paso se aumenta el **nivel** y se construye la **ruta_jerarquica** agregando el apellido del empleado correspondiente.
+
+**CONSULTA DEL EJERCICIO**
+
+```sql
+WITH JERARQUIA (
+                EMPLOYEE_ID,
+                LAST_NAME,
+                MANAGER_ID,
+                NIVEL,
+                RUTA_JERARQUIA
+                ) AS (
+                       SELECT E.EMPLOYEE_ID,
+                              E.LAST_NAME,
+                              E.MANAGER_ID,
+                              1 AS NIVEL,
+                              E.LAST_NAME AS RUTA_JERARQUIA
+                       FROM HR.EMPLOYEES E
+                       WHERE E.MANAGER_ID IS NULL
+                       
+                       UNION ALL
+                       
+                       SELECT E.EMPLOYEE_ID,
+                              E.LAST_NAME,
+                              E.MANAGER_ID,
+                              J.NIVEL + 1,
+                              J.RUTA_JERARQUIA || ' ' || E.LAST_NAME
+                       FROM HR.EMPLOYEES E
+                       JOIN JERARQUIA J
+                       ON E.MANAGER_ID = J.EMPLOYEE_ID
+                       )
+SELECT * FROM JERARQUIA;
+
+```
+**PREGUNTAS DEL EJERCICIO**
+
+- Explicar qué ocurre si UNION ALL se reemplaza por UNION y cómo se controlaría un ciclo en los datos.
+
+La clausula **UNION ALL** permite conservar todos los registros obtenidos durante la recursión, mientras que la clausula **UNION** elimina los resultados que sean iguales, lo que puede cambiar la cantidad de registros que se conservan en cada iteración y hacer que Oracle tenga un trabajo adicional de eliminar los duplicados.
+
+### Ejercicio 6.10: Posicionamiento salarial por departamento
+
+**Columnas obligatorias:** employee_id, last_name, department_id, salary, rn, rk, drk, prev_salary,
+delta_prev, salary_running_total, dept_avg_salary, pct_vs_dept_avg
+
+- rn, rk y drk corresponden a ROW_NUMBER, RANK y DENSE_RANK sobre la misma partición y el
+mismo ordenamiento.
+- prev_salary y delta_prev deben calcularse con LAG sobre la fecha de contratación, sin que la
+primera fila de cada partición quede en nulo.
+- salary_running_total es el acumulado por departamento en orden de contratación.
+- El comentario debe señalar un departamento con salarios empatados y explicar sobre esas
+filas concretas la diferencia entre las tres numeraciones, además de indicar qué marco de
+ventana aplica Oracle por defecto cuando el OVER lleva ORDER BY sin ROWS ni RANGE.
+
+**ANÁLISIS DEL EJERCICIO**
+
+A mi parecer, este ejercicio tiene la consulta más amplia, pero no por esto, la más compleja. Para empezar, se tuvieron que obtener las 12 columnas obligatorias, de las cuales 6 tienen pautas importantes:
+
+- **rn:** Esta columna representa a la función de ventana **"ROW_NUMBER()"**, la cual numera a los empleados de cada departamento del salario más alto al más bajo.
+- **rk:** Esta columna representa a la función de ventana **"RANK()"**, la cual numera a los empleados de cada departamento del salario más alto al más bajo, asignando el mismo número dejando un hueco en el conteo si hay empates.
+- **drk:** Esta columna representa a la función de ventana **"DENSE_RANK()"**, la cual numera a los empleados de cada departamento del salario más alto al más bajo, asignando el mismo número sin dejar un hueco en el conteo si hay empates.
+- **prev_salary:** Esta columna nos pide mostrar el sueldo del empleado anterior del mismo departamento. En el ejercicio, se pide "_sin que la primera fila de cada partición quede en nulo_", para que esto se cumpla, se utilizó la función de ventana **LAG(salary, 1, salary)** la cual, ademas de obtener el valor de la fila anterior, el tercer parametro ayuda a decir que, si no existe una fila anterior, en lugar de devolver NULL, devolverá el salario de la fila actual.
+- **delta_prev:** Esta columna nos pide calcular la diferencia entre el sueldo del empleado actual y el del empleado anterior. Para esto, se utilizó la expresion **salary - LAG(salary, 1, salary)** la cual realiza exactamente esa operación.
+- **pct_vs_dept_avg:** Esta columna nos pide calcular que porcentaje representa el sueldo del empleado frente al promedio de su propio departamento. Para esto se utilizó la expresión **AVG()** junto con **ROUND()** multiplicandolo por 100 para obtener el procentaje.
+
+**CONSULTA DEL EJERCICIO**
+
+```sql
+SELECT employee_id,
+       last_name,
+       department_id,
+       salary,
+
+       ROW_NUMBER() OVER (
+           PARTITION BY department_id
+           ORDER BY salary DESC
+       ) AS rn,
+
+       RANK() OVER (
+           PARTITION BY department_id
+           ORDER BY salary DESC
+       ) AS rk,
+
+       DENSE_RANK() OVER (
+           PARTITION BY department_id
+           ORDER BY salary DESC
+       ) AS drk,
+
+       LAG(salary, 1, salary) OVER (
+           PARTITION BY department_id
+           ORDER BY hire_date
+       ) AS prev_salary,
+
+       salary -
+       LAG(salary, 1, salary) OVER (
+           PARTITION BY department_id
+           ORDER BY hire_date
+       ) AS delta_prev,
+
+       SUM(salary) OVER (
+           PARTITION BY department_id
+           ORDER BY hire_date
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+       ) AS salary_running_total,
+
+       AVG(salary) OVER (
+           PARTITION BY department_id
+       ) AS dept_avg_salary,
+
+       ROUND(
+           100 * salary /
+           AVG(salary) OVER (
+               PARTITION BY department_id
+           ),
+           2
+       ) AS pct_vs_dept_avg
+
+FROM HR.EMPLOYEES
+ORDER BY department_id, 
+         hire_date;
+
+```
+**PREGUNTAS DEL EJERCICIO**
+- Señalar un departamento con salarios empatados y explicar sobre esas filas concretas la diferencia entre las tres numeraciones.
+
+Esta el caso del **departamento con id 80**, con los empleados con apellido King, Tucker y Bloom.
+
+-> En el caso de la columna **rn** se les asignó un número diferente a pesar de que estos esten empatados.
+
+-> En el caso de la columna **rk** se les asignó el mismo número, pero al seguir con la cuenta de los empleados, hubo un salto en los números.
+
+-> En el caso de la columna **drk** se les asignó el mismo número, pero al seguir con la cuenta de los demás empleados, no hubo un salto en los números.
+
+- Indicar qué marco de ventana aplica Oracle por defecto cuando el OVER lleva ORDER BY sin ROWS ni RANGE.
+
+Cuando se pone un ORDER BY solo, Oracle aplica por defecto **RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW**, lo cual significa que acumula los datos desde el inicio hasta la fila actual incluyendo todos los valores duplicados en orden.
+
+### Ejercicio 6.11: Tres mejor pagados de cada departamento
+
+**Columnas obligatorias:** department_id, department_name, employee_id, last_name, salary, drk
+
+- No se acepta filtrar el alias de la función de ventana en el WHERE de la misma consulta.
+- El comentario debe explicar en qué momento del orden lógico de evaluación se calculan las
+funciones de ventana y por qué eso obliga a envolver la consulta.
+
+**ANÁLISIS DEL EJERCICIO**
+
+Para realizar esta consulta se tuvo que entender que, como las funciones de ventana se calculan despues del **WHERE**, no es posible filtrar usando el alias **DRK**, por lo cual se utilizó una subconsulta, donde primero se calcula el ranking con la función **DENSE_RANK()** y luego, en la consulta externa se le hace el filtro de **DRK <= 3**, de esta manera se puediron obtener los tres empleados mejor pagados de cada departamento.
+
+**CONSULTA DEL EJERCICIO**
+
+```sql
+SELECT *
+FROM ( SELECT D.DEPARTMENT_ID,
+       D.DEPARTMENT_NAME,
+       E.EMPLOYEE_ID,
+       E.LAST_NAME,
+       E.SALARY,
+       DENSE_RANK() OVER (
+                          PARTITION BY D.DEPARTMENT_ID
+                          ORDER BY E.SALARY DESC
+                          ) AS DRK 
+FROM HR.EMPLOYEES E
+LEFT JOIN HR.DEPARTMENTS D
+ON E.DEPARTMENT_ID = D.DEPARTMENT_ID) 
+WHERE DRK <= 3;
+
+```
+**PREGUNTAS DEL EJERCICIO**
+
+- ¿En qué momento del orden lógico de evaluación se calculan las funciones de ventana y por qué eso obliga a envolver la consulta?
+
+Las funciones de ventana se calculan despues del **WHERE** en el order lógico de evaluación en SQL, por esta razón es que el WHERE no puede utilizar el resultado de **DENSE_RANK()**. La solución que se aplicó en esta consulta es realizar una subconsulta con la expresión de ventana para que luego en la consulta externa se pueda filtrar este dato.
+
 ## PARTE 2. Depuración de consultas defectuosas
 ## Scripts de la solución del taller
 
