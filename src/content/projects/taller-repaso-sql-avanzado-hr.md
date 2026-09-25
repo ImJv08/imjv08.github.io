@@ -130,7 +130,7 @@ Este ejercicio es diferente a los anteriores, ya que en esta ocasión se piden a
 
 - **Filtro del salario en la clausula ON**
 
-Lo que se filtre en la clausula ON se aplica durante la reunion (En este caso en el LEFT JOIN), lo que causa que se conserven algunas filas aunque no cumplan la condición, que en este caso, incluiria los departamentos aunque no tengan empleados con salario superior a 1000.
+Lo que se filtre en la clausula **ON** se aplica durante la reunion (En este caso en el LEFT JOIN), lo que causa que se conserven algunas filas aunque no cumplan la condición, que en este caso, incluiria los departamentos aunque no tengan empleados con salario superior a 1000.
 
 ```sql
 SELECT 'CONDICIÓN EN ON' AS variante,
@@ -146,7 +146,7 @@ En este caso, el numero de filas que se obtuvieron al hacer esta consulta es de 
 
 - **Filtro del salario en la clausula WHERE**
 
-Lo que se filtre en la clausula WHERE se aplica después de la reunión, lo que significa que, en esta ocasión no se conservan las filas donde el empleado no cumpla con la condición, pudiendo eliminar departamentos que se habian obtenido por el LEFT JOIN. Esto basicamente hace que el LEFT JOIN se convierta en un INNER JOIN.
+Lo que se filtre en la clausula **WHERE** se aplica después de la reunión, lo que significa que, en esta ocasión no se conservan las filas donde el empleado no cumpla con la condición, pudiendo eliminar departamentos que se habian obtenido por el LEFT JOIN. Esto basicamente hace que el LEFT JOIN se convierta en un INNER JOIN.
 
 ```sql
 SELECT 'CONDICIÓN EN WHERE' AS variante,
@@ -206,6 +206,130 @@ Porque en la lista de jefes que devuelve la subconsulta hay un valor NULL. Si se
 - ¿Por qué NOT EXISTS no presenta ese comportamiento?
 
 Porque NOT EXISTS no se fija en los valores, sino si la subconsulta encuentra o no empleados que cumplan con la condición, lo que significa que si el valor es NULL no sucede la confución, ya que lo tomara como que no cumple la condición.
+
+### Ejercicio 6.6: Agregación con filtrado de grupos
+
+**Columnas obligatorias:** department_id, department_name, employee_count, avg_salary,
+min_salary, max_salary, salary_mass, empleados_recientes
+
+- Solo departamentos con más de cinco empleados y salario promedio superior a 6.000.
+- empleados_recientes debe contar únicamente a los contratados después del 1 de enero de
+2005, sin que ese criterio afecte a employee_count. Debe resolverse con agregación
+condicional, no con WHERE.
+- El comentario debe justificar por qué el criterio de más de cinco empleados no puede
+escribirse en WHERE.
+
+**ANÁLISIS DEL EJERCICIO**
+
+Para el desarrollo de esta consulta, en primer lugar se debe obtener las 8 columnas obligatorias, de las cuales 6 tienen pautas importantes:
+
+- **employee_count:** Esta columna nos pide contar el total de empleados que hay en un departamento, para lograrlo se utilizó la función **COUNT()**.
+- **avg_salary:** Esta columna nos pide calcular el promedio de los salarios que obtienen los empleados en un departamento, para lograrlo se utilizó la función **AVG()**.
+- **min_salary:** Esta columna nos pide obtener el salario más bajo que reciben los empleados en un departamento, para lograrlo se utilizó la función **MIN()**.
+- **max_salary:** Esta columna nos pide obtener el salario más alto que reciben los empleados en un departamento, para lograrlo se utilizó la función **MAX()**.
+- **salary_mass:** Esta columna nos pide obtener la masa salarial, es decir, la suma total de todos los salarios pagados a los empleados en un departamento, para lograrlo se utilizó la función **SUM()**.
+- **empleados_recientes:** Esta columna a mi parecer es la más compleja, ya que nos pide contar los empleados que fueron contratados despúes del 1 de Enero de 2005, para lograrlo, a la función **SUM()** se le agregó la estructura **CASE ... END** la cual nos permitio hacer la condicion de que, si la fecha de contratación es mayor a 01/01/2005, entonces le asigna el valor de 1, sino, entonces su valor será 0. De esta manera se pueden contar los empleados recientes sin afectar employee_count.
+
+**NOTA:** Este ejercicio tiene una pauta importante, dice que el resultado debe incluir _Solo departamentos con más de cinco empleados y salario promedio superior a 6.000_. Para lograr esto, la condición se debe poner en la clausula **HAVING()**, ya que es una condición que se debe validar despues de agrupar los datos.
+
+**CONSULTA DEL EJERCICIO**
+
+```sql
+SELECT D.DEPARTMENT_ID,
+       D.DEPARTMENT_NAME,
+       COUNT(E.EMPLOYEE_ID) AS EMPLOYEE_COUNT,
+       AVG(E.SALARY) AS AVG_SALARY,
+       MIN(E.SALARY) AS MIN_SALARY,
+       MAX(E.SALARY) AS MAX_SALARY,
+       SUM(E.SALARY) AS SALARY_MASS,
+       SUM(
+           CASE
+               WHEN E.HIRE_DATE > DATE '2005-01-01' THEN 1
+               ELSE 0
+           END
+        ) AS EMPLEADOS_RECIENTES
+FROM HR.DEPARTMENTS D
+LEFT JOIN HR.EMPLOYEES E
+ON D.DEPARTMENT_ID = E.DEPARTMENT_ID
+GROUP BY D.DEPARTMENT_ID,
+         D.DEPARTMENT_NAME
+HAVING COUNT(E.EMPLOYEE_ID) > 5 AND AVG(E.SALARY) > 6000;
+```
+
+**PREGUNTAS DEL EJERCICIO**
+
+- ¿Por qué el criterio de más de cinco empleados no puede escribirse en WHERE?
+
+Esta condición no puede ir en el WHERE ya que esta clausula raliza el filtro fila por fila antes de realizar la agrupación. Teniendo en cuenta que el conteo de los empleados se hace por la funcion COUNT() que es agrupada en el GROUP BY, el sistema no sabe cuantos empleados hay en cada departamento hasta que se agrupen. Por esta razón, cualquier condición que dependa de estar agrupados para saber si se cumple o no, debe hacerse en la clausula HAVING.
+
+### Ejercicio 6.7: Comparación de cada empleado contra el promedio de su departamento
+
+**Columnas obligatorias:** employee_id, last_name, department_id, salary, dept_avg_salary,
+diff_vs_avg, pct_vs_avg
+
+- Deben entregar dos versiones equivalentes: una con subconsulta correlacionada y otra con
+expresión común de tabla.
+- El comentario debe señalar exactamente qué columna produce la correlación y comparar
+ambos planes de ejecución obtenidos con EXPLAIN PLAN o AUTOTRACE.
+
+**ANÁLISIS DEL EJERCICIO**
+
+Este ejercicio es un poco diferente a los anteriores, ya que, al igual que en el Ejercicio 6.4, nos piden hacer la comparación de dos consultas que solucionan el ejercicio.
+
+**Versión de la subconsulta correlacionada**
+
+Para realizar la consulta utilizando subconsultas correlacionadas, se utilizo principalmente para obtener las siguientes columnas:
+
+- **dept_avg_salary:** En esta columna nos piden calcular el salario promedio del departamento del empleado actual, para lograrlo, se hizo una subconsulta, la cual busca en la tabla EMPLOYEES todos los empleados con el mismo DEPARTMENT_ID, para asi encontrar a los empleados que pertenecen al mismo departamento, para luego calcular su promedio con la función **AVG()** y la función **ROUND()** para redondear el resultado a 2 decimales.
+- **diff_vs_avg:** En esta columna nos piden calcular la diferencia entre el salario del empleado y el promedio de su departamento, para lograrlo, se restó el salario del departamento y el promedio, el cual se obtuvo por medio de una subconsulta que, nuevamente por medio de **AVG()** y **ROUND()** se obtiene el promedio por departamento.
+- **pct_vs_avg:** En esta columna nos piden calcular la desviación procentual del salario del empleado respecto al promedio de su departamento, para lograrlo, se aplico la formula matematica ((Salario-Promedio) / Promedio). Al igual que en las dos columnas anteriores, se tuvo que hacer una subconsulta para encontrar el promedio del departamento para poder hacer el calculo. Adicionalmente, al resultado final se multiplicó por 100 para poder obtener el porcentaje final.
+
+```sql
+SELECT E.EMPLOYEE_ID,
+       E.LAST_NAME,
+       E.DEPARTMENT_ID,
+       E.SALARY,
+       ROUND((SELECT AVG(E2.SALARY)
+              FROM HR.EMPLOYEES E2
+              WHERE E2.DEPARTMENT_ID = E.DEPARTMENT_ID),2) AS DEPT_AVG_SALARY,
+        ROUND((E.SALARY - (SELECT AVG(E3.SALARY)
+                           FROM HR.EMPLOYEES E3
+                           WHERE E3.DEPARTMENT_ID = E.DEPARTMENT_ID)),2) AS DIFF_VS_AVG,
+        ROUND((E.SALARY - (SELECT AVG(E3.SALARY)
+                           FROM HR.EMPLOYEES E3
+                           WHERE E3.DEPARTMENT_ID = E.DEPARTMENT_ID)) / (SELECT AVG(E3.SALARY)
+                                                                         FROM HR.EMPLOYEES E3
+                                                                         WHERE E3.DEPARTMENT_ID = E.DEPARTMENT_ID)*100, 2)  AS PCT_VS_AVG
+FROM HR.EMPLOYEES E;
+```
+
+**Versión con expresión común en tabla**
+
+Para realizar la consulta con expresión común en tabla (Es decir, con un CTE), se utilizó de la siguiente manera:
+
+- **CTE PROMEDIO:** En esta CTE, se calcula el salario promedio por departamento, utilizando la función **AVG()**.
+
+Gracias a lo anterior, los calculos de las demás columnas fueron más simplificadas:
+
+- **dept_avg_salary:** Para obtener el calculo del salario promedio por departamento, solo se tuvo que obtener el valor de la columa "prom_salario" de la tabla promedio y redondearlo con la función **ROUND()** a 2 decimales.
+```sql
+WITH PROMEDIO AS(
+                 SELECT E.DEPARTMENT_ID,
+                        AVG(E.SALARY) AS PROM_SALARIO
+                 FROM HR.EMPLOYEES E
+                 GROUP BY E.DEPARTMENT_ID
+                )
+SELECT E.EMPLOYEE_ID,
+       E.LAST_NAME,
+       E.DEPARTMENT_ID,
+       E.SALARY,
+       ROUND(P.PROM_SALARIO,2) AS DEPT_AVG_SALARY,
+       ROUND(E.SALARY - P.PROM_SALARIO, 2) AS DIFF_VS_AVG,
+       ROUND((E.SALARY - P.PROM_SALARIO) / P.PROM_SALARIO * 100,2) AS PCT_VS_AVG
+FROM HR.EMPLOYEES E
+JOIN PROMEDIO P
+ON E.DEPARTMENT_ID = P.DEPARTMENT_ID;
+```
 
 ## PARTE 2. Depuración de consultas defectuosas
 ## Scripts del taller solucionado
