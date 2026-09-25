@@ -285,6 +285,7 @@ Para realizar la consulta utilizando subconsultas correlacionadas, se utilizo pr
 - **pct_vs_avg:** En esta columna nos piden calcular la desviación procentual del salario del empleado respecto al promedio de su departamento, para lograrlo, se aplico la formula matematica ((Salario-Promedio) / Promedio). Al igual que en las dos columnas anteriores, se tuvo que hacer una subconsulta para encontrar el promedio del departamento para poder hacer el calculo. Adicionalmente, al resultado final se multiplicó por 100 para poder obtener el porcentaje final.
 
 ```sql
+EXPLAIN PLAN FOR
 SELECT E.EMPLOYEE_ID,
        E.LAST_NAME,
        E.DEPARTMENT_ID,
@@ -301,7 +302,246 @@ SELECT E.EMPLOYEE_ID,
                                                                          FROM HR.EMPLOYEES E3
                                                                          WHERE E3.DEPARTMENT_ID = E.DEPARTMENT_ID)*100, 2)  AS PCT_VS_AVG
 FROM HR.EMPLOYEES E;
+
+SELECT *
+FROM TABLE(DBMS_XPLAN.DISPLAY(format => 'BASIC +COST +ROWS'));
 ```
+
+- **Resultado del plan de ejecución**
+
+Plan hash value: 2475941632
+
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Operation</th>
+      <th>Name</th>
+      <th>Rows</th>
+      <th>Cost (%CPU)</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>SELECT STATEMENT</td>
+      <td></td>
+      <td>1081</td>
+      <td>441 (1)</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>PX COORDINATOR</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>PX SEND QC (RANDOM)</td>
+      <td>:TQ10004</td>
+      <td>1081</td>
+      <td>8 (25)</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>EXPRESSION EVALUATION</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>HASH JOIN RIGHT OUTER BUFFERED</td>
+      <td></td>
+      <td>1081</td>
+      <td>8 (25)</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>PX RECEIVE</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>PX SEND BROADCAST</td>
+      <td>:TQ10002</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>VIEW</td>
+      <td>VW_SSQ_1</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>HASH GROUP BY</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>PX RECEIVE</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>PX SEND HASH</td>
+      <td>:TQ10000</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>HASH GROUP BY</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>PX BLOCK ITERATOR</td>
+      <td></td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>TABLE ACCESS FULL</td>
+      <td>EMPLOYEES</td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>HASH JOIN OUTER</td>
+      <td></td>
+      <td>340</td>
+      <td>5 (20)</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>PX BLOCK ITERATOR</td>
+      <td></td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>TABLE ACCESS FULL</td>
+      <td>EMPLOYEES</td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>PX RECEIVE</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>PX SEND BROADCAST</td>
+      <td>:TQ10003</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>VIEW</td>
+      <td>VW_SSQ_2</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>HASH GROUP BY</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>PX RECEIVE</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td>PX SEND HASH</td>
+      <td>:TQ10001</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>23</td>
+      <td>HASH GROUP BY</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>24</td>
+      <td>PX BLOCK ITERATOR</td>
+      <td></td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>25</td>
+      <td>TABLE ACCESS FULL</td>
+      <td>EMPLOYEES</td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>26</td>
+      <td>SORT AGGREGATE</td>
+      <td></td>
+      <td>1</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>TABLE ACCESS BY INDEX ROWID BATCHED</td>
+      <td>EMPLOYEES</td>
+      <td>10</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>28</td>
+      <td>INDEX RANGE SCAN</td>
+      <td>EMP_DEPARTMENT_IX</td>
+      <td>10</td>
+      <td>1 (0)</td>
+    </tr>
+    <tr>
+      <td>29</td>
+      <td>SORT AGGREGATE</td>
+      <td></td>
+      <td>1</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>30</td>
+      <td>TABLE ACCESS BY INDEX ROWID BATCHED</td>
+      <td>EMPLOYEES</td>
+      <td>10</td>
+      <td>2 (0)</td>
+    </tr>
+  </tbody>
+</table>
 
 **Versión con expresión común en tabla**
 
@@ -312,7 +552,10 @@ Para realizar la consulta con expresión común en tabla (Es decir, con un CTE),
 Gracias a lo anterior, los calculos de las demás columnas fueron más simplificadas:
 
 - **dept_avg_salary:** Para obtener el calculo del salario promedio por departamento, solo se tuvo que obtener el valor de la columa "prom_salario" de la tabla promedio y redondearlo con la función **ROUND()** a 2 decimales.
+- **diff_vs_avg:** Para obtener la diferencia del empleado y el promedio del departamento, se tuvo que hacer la resta entre el salario del empleado y el valor de la columna "prom_salario" de la CTE, y redondearlo a 2 decimales.
+- **pct_vs_avg:** Para obtener la desviación procentual del salario del empleado respecto al promedio de su departamento se utilizó la misma formula matemática del caso anterior, pero en esta ocasión para obtener el valor del promedio solo se llamó la columna "prom_salario" de la CTE.
 ```sql
+EXPLAIN PLAN FOR
 WITH PROMEDIO AS(
                  SELECT E.DEPARTMENT_ID,
                         AVG(E.SALARY) AS PROM_SALARIO
@@ -329,7 +572,138 @@ SELECT E.EMPLOYEE_ID,
 FROM HR.EMPLOYEES E
 JOIN PROMEDIO P
 ON E.DEPARTMENT_ID = P.DEPARTMENT_ID;
+
+SELECT *
+FROM TABLE(DBMS_XPLAN.DISPLAY(format => 'BASIC +COST +ROWS'));
 ```
+- **Resultado del plan de ejecución**
+
+Plan hash value: 3091987791
+
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Operation</th>
+      <th>Name</th>
+      <th>Rows</th>
+      <th>Cost (%CPU)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>SELECT STATEMENT</td>
+      <td></td>
+      <td>339</td>
+      <td>5 (20)</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>PX COORDINATOR</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>PX SEND QC (RANDOM)</td>
+      <td>:TQ10002</td>
+      <td>339</td>
+      <td>5 (20)</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>HASH JOIN</td>
+      <td></td>
+      <td>339</td>
+      <td>5 (20)</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>PX RECEIVE</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>PX SEND BROADCAST</td>
+      <td>:TQ10001</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>VIEW</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>HASH GROUP BY</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>PX RECEIVE</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>PX SEND HASH</td>
+      <td>:TQ10000</td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>HASH GROUP BY</td>
+      <td></td>
+      <td>11</td>
+      <td>3 (34)</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>PX BLOCK ITERATOR</td>
+      <td></td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>TABLE ACCESS FULL</td>
+      <td>EMPLOYEES</td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>PX BLOCK ITERATOR</td>
+      <td></td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>TABLE ACCESS FULL</td>
+      <td>EMPLOYEES</td>
+      <td>107</td>
+      <td>2 (0)</td>
+    </tr>
+  </tbody>
+</table>
+ 
+**PREGUNTAS DEL EJERCICIO**
+
+- ¿Qué diferencia se observa entre la versión con expresión común y la versión con subconsulta correlacionada?
+
+Como se puede ver en la columna de **COST (%CPU)** de ambas consultas, podemos notar que la versión con subconsulta relacionada tiene un costo estimado de **441**, mientras que en la versión con expresión común presenta un costo estimado de **5**. Esto se debe a que la primera versión requiere operaciones adicionales, como **SORT AGGREGATE**, accesos por el indice y transformaciones internas de las subconsultas, por lo tanto, Oracle estima que la versión con expresión común requiere menos trabajo para obtener el resultado.
 
 ## PARTE 2. Depuración de consultas defectuosas
 ## Scripts del taller solucionado
