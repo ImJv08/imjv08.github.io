@@ -164,17 +164,6 @@ SIN_H AS (
          )
 SELECT E.EMPLOYEE_ID,
        E.LAST_NAME,
-       (CASE 
-            WHEN E.EMPLOYEE_ID IN (SELECT EMPLOYEE_ID
-                                   FROM CON_H)
-            THEN 'CON HISTORIAL'
-            ELSE 'SIN HISTORIAL'
-        END
-        ) AS MOVILIDAD_STATUS
-FROM HR.EMPLOYEES E;
-
-SELECT E.EMPLOYEE_ID,
-       E.LAST_NAME,
        (CASE
            WHEN NOT EXISTS (
                             SELECT 1

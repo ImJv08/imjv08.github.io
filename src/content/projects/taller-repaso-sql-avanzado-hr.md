@@ -705,8 +705,65 @@ Plan hash value: 3091987791
 
 Como se puede ver en la columna de **COST (%CPU)** de ambas consultas, podemos notar que la versión con subconsulta relacionada tiene un costo estimado de **441**, mientras que en la versión con expresión común presenta un costo estimado de **5**. Esto se debe a que la primera versión requiere operaciones adicionales, como **SORT AGGREGATE**, accesos por el indice y transformaciones internas de las subconsultas, por lo tanto, Oracle estima que la versión con expresión común requiere menos trabajo para obtener el resultado.
 
+### Ejercicio 6.8: Movilidad interna
+
+**Columnas obligatorias:** employee_id, last_name, movilidad_status
+
+- movilidad_status debe indicar CON HISTORIAL o SIN HISTORIAL.
+- Deben resolverlo con INTERSECT y MINUS, y contrastar el resultado con la versión equivalente
+escrita con NOT EXISTS.
+- El comentario debe explicar cómo tratan los nulos las operaciones de conjuntos frente al
+operador de igualdad.
+
+**ANÁLISIS DEL EJERCICIO**
+
+Para la consulta de este ejercicio nos están pidiendo utilizar las clausulas **INTERSECT**, **MINUS** y **NOT EXISTS**. Estas clausulas realizan las siguientes acciones: 
+
+- **INTESECT:** Esta clausula nos permite tomar las columnas que tienen en común ambas tablas. En la consulta se utilizó en la CTE llamada **"CON_H"**, la cual, con ayuda de esta clausula, se pudo identificar la id de los empleados que tambien estan en la tabla "JOB_HISTORY", para asi encontrar los empleados que tienen historial.
+- **MINUS:** Esta clausula nos permite tomar las columnas que tiene la primera tabla que no tiene la segunda. En la consulta se utilizó en la CTE llamada **"SIN_H**, la cual, con ayuda de esta clausula, se pudo identificar la id de los empleados que no estan en la tabla "JOB_HISTORY", para asi encontrar los empleados que no tienen historial.
+- **NOT EXISTS:** Esta clausula nos permite comprobar que una subconsulta no devuelva ninguna fila. En la consulta se utilizó para comprobar si cada empleado tiene o no registros en la tabla "JOB_HISTORY", utilizando la CTE **CON_H**.
+
+**CONSULTA DEL EJERCICIO**
+
+```sql
+WITH CON_H AS (
+               SELECT E.EMPLOYEE_ID
+               FROM HR.EMPLOYEES E
+               INTERSECT 
+               SELECT J.EMPLOYEE_ID
+               FROM HR.JOB_HISTORY J
+               ),
+SIN_H AS (
+          SELECT E.EMPLOYEE_ID
+          FROM HR.EMPLOYEES E
+          MINUS
+          SELECT J.EMPLOYEE_ID
+          FROM HR.JOB_HISTORY J
+         )
+SELECT E.EMPLOYEE_ID,
+       E.LAST_NAME,
+       (CASE
+           WHEN NOT EXISTS (
+               SELECT 1
+               FROM CON_H C
+               WHERE E.EMPLOYEE_ID = C.EMPLOYEE_ID
+           )
+           THEN 'SIN HISTORIAL'
+           ELSE 'CON HISTORIAL'
+        END
+        ) AS MOVILIDAD_STATUS
+FROM HR.EMPLOYEES E;
+
+```
+
+**PREGUNTAS DEL EJERCICIO**
+
+- ¿Cómo tratan los nulos las operaciones de conjuntos frente al operador de igualdad?
+
+Mientras que **NULL = NULL** nunca devuelve True, sino **UNKNOWN**, las operaciones de conjunto (como INTERSECT, UNION Y MINUS) **pueden considerar dos valores NULL como iguales** al comparar las filas. Por esto, para comprobar si un valor es nulo se debe utilizar **IS NULL** y no el operador de igualdad.
+
 ## PARTE 2. Depuración de consultas defectuosas
-## Scripts del taller solucionado
+## Scripts de la solución del taller
 
 - Aquí puedes descargar el script SQL con la solucion de los puntos de la primera parte del taller.
 
