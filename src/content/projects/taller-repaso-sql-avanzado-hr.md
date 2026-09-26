@@ -3,8 +3,8 @@ title: SQL Avanzado aplicado sobre el esquema HR
 description: >-
  En el taller se realizaron algunos puntos sobre el esquema HR de Oracle los cuales están pensados para practicar los mecanismos de SQL avanzado, de esta manera se pudo reforzar los conceptos y aprender otras herramientas para realizar consultas en SQL.
 image: '@assets/projects/sql-avanzado/image.png'
-startDate: 2026-12-07
-endDate: 2026-01-17
+startDate: 2026-08-07
+endDate: 2026-09-25
 skills:
   - Oracle SQL
   - SQL Avanzado
@@ -12,11 +12,12 @@ skills:
 featured: true
 category: sql-avanzado
 ---
+
 ## Taller en formato PDF
 
 Aquí puedes descargar el taller que fue solucionado en esta sección.
 
-[📥 Descargar Taller](/downloads/taller_repaso_SQL_Avanzado_HR.pdf)
+[📥 Descargar Taller](/downloads/taller-sql-avanzado/taller_repaso_SQL_Avanzado_HR.pdf)
 
 
 ## PARTE 1. Consultas y columnas mínimas que se deben mostrar 
@@ -230,7 +231,9 @@ Para el desarrollo de esta consulta, en primer lugar se debe obtener las 8 colum
 - **salary_mass:** Esta columna nos pide obtener la masa salarial, es decir, la suma total de todos los salarios pagados a los empleados en un departamento, para lograrlo se utilizó la función **SUM()**.
 - **empleados_recientes:** Esta columna a mi parecer es la más compleja, ya que nos pide contar los empleados que fueron contratados despúes del 1 de Enero de 2005, para lograrlo, a la función **SUM()** se le agregó la estructura **CASE ... END** la cual nos permitio hacer la condicion de que, si la fecha de contratación es mayor a 01/01/2005, entonces le asigna el valor de 1, sino, entonces su valor será 0. De esta manera se pueden contar los empleados recientes sin afectar employee_count.
 
+
 **NOTA:** Este ejercicio tiene una pauta importante, dice que el resultado debe incluir _Solo departamentos con más de cinco empleados y salario promedio superior a 6.000_. Para lograr esto, la condición se debe poner en la clausula **HAVING()**, ya que es una condición que se debe validar despues de agrupar los datos.
+
 
 **CONSULTA DEL EJERCICIO**
 
@@ -807,6 +810,11 @@ WITH JERARQUIA (
 SELECT * FROM JERARQUIA;
 
 ```
+
+![Resultado del ejercicio](src/assets/projects/sql-avanzado/Consulta-Ejercicio9.png)
+_NOTA: Se puede ver que el empleado raiz (es decir, el caso base), es el empleado KING, debido a que este no tiene un Manager asociado_
+
+
 **PREGUNTAS DEL EJERCICIO**
 
 - Explicar qué ocurre si UNION ALL se reemplaza por UNION y cómo se controlaría un ciclo en los datos.
@@ -900,6 +908,8 @@ ORDER BY department_id,
 
 Esta el caso del **departamento con id 80**, con los empleados con apellido King, Tucker y Bloom.
 
+![Resultado del ejercicio](src/assets/projects/sql-avanzado/Consulta-Ejercicio10.png)
+
 -> En el caso de la columna **rn** se les asignó un número diferente a pesar de que estos esten empatados.
 
 -> En el caso de la columna **rk** se les asignó el mismo número, pero al seguir con la cuenta de los empleados, hubo un salto en los números.
@@ -948,10 +958,186 @@ WHERE DRK <= 3;
 Las funciones de ventana se calculan despues del **WHERE** en el order lógico de evaluación en SQL, por esta razón es que el WHERE no puede utilizar el resultado de **DENSE_RANK()**. La solución que se aplicó en esta consulta es realizar una subconsulta con la expresión de ventana para que luego en la consulta externa se pueda filtrar este dato.
 
 ## PARTE 2. Depuración de consultas defectuosas
+
+### Consulta I.1: Todos los departamentos con la cantidad de empleados, incluidos los vacios.
+
+**SALIDA DE LA CONSULTA SIN CORREGIR**
+
+<div style="display: flex; align-items: flex-start; gap: 30px;">
+ <div>
+
+```sql
+SELECT d.department_name, COUNT(*)
+FROM hr.departments d LEFT JOIN hr.employees e
+ ON d.department_id = e.department_id
+GROUP BY d.department_name;
+```
+
+</div> <div>
+
+![Resultado del ejercicio](src/assets/projects/sql-avanzado/ConsultaErronea-Ejercicio1.png)
+
+</div> </div>
+
+**IDENTIFICACIÓN DE ERRORES**
+
+El error más evidente de esta consulta, es utilizar **COUNT(*)**, debido a que, al estar utilizando un LEFT JOIN en la consulta puede traer departamentos que no tienen empleados asociados, marcandolos como **NULL**, lo que hace que la función lo cuente como 1, cuando realmente en ese departamento no hay empleados. 
+
+Para que esta consulta dé el resultado esperado, hay que utilizar especificamente la columna de empleados, utilizando **COUNT(employee_id)**, para que de esta manera, no se cuenten los nulos como 1.
+
+Adicionalmente se le agregó el alias "cantidad_empleados" a la columna del conteo de empleados para un mejor entendimiento y orden del resultado
+
+**SALIDA DE LA CONSULTA CORREGIDA**
+
+<div style="display: flex; align-items: flex-start; gap: 30px;">
+ <div style="width: 45%;">
+
+```sql
+SELECT d.department_name, 
+       COUNT(e.employee_id) AS cantidad_empleados
+FROM hr.departments d 
+LEFT JOIN hr.employees e
+ON d.department_id = e.department_id
+GROUP BY d.department_name;
+```
+
+</div> <div style="width: 55%;">
+
+![Resultado del ejercicio](src/assets/projects/sql-avanzado/ConsultaCorrecta-Ejercicio1.png)
+
+</div> </div>
+
+### Consulta I.2: Empleados que no trabajan en los departamentos 10, 20 ni 30.
+
+**CONSULTA SIN CORREGIR**
+
+```sql
+SELECT last_name
+FROM hr.employees
+WHERE department_id NOT IN (10, 20, 30);
+```
+
+**IDENTIFICACIÓN DE ERRORES**
+
+El error en esta consulta puede pasar desapercibido, ya que la clausula **NOT IN** al comparar un nulo devolverá **UNKNOWN**, lo que puede causar errores en la salida. Para esto, se utilizó una clausula que permite decir que solo se quiere tomar en cuenta a los departamentos que tengan empleados.
+
+**CONSULTA CORREGIDA**
+
+```sql
+SELECT last_name
+FROM hr.employees
+WHERE department_id NOT IN (10, 20, 30);
+  AND department_id IS NOT NULL;
+```
+
+### Consulta I.3: Departamentos ubicados en Estados Unidos con su cantidad de empleados
+
+**CONSULTA SIN CORREGIR**
+
+```sql
+SELECT d.department_name, COUNT(*)
+FROM hr.departments d
+LEFT JOIN hr.employees e 
+ON d.department_id = e.department_id
+LEFT JOIN hr.locations l 
+ON d.location_id = l.location_id
+WHERE l.country_id = 'US'
+GROUP BY d.department_name;
+```
+
+**IDENTIFICACIÓN DE ERRORES**
+
+En esta consulta vuelve a suceder el error de la clausula **COUNT(*)** del cual hablamos hace unos ejercicios atras y se solucionó de la misma manera. Adicionalmente hay un punto que pasa desapercibido y es el **LEFT JOIN** de departamentos y ubicaciones, este se cambio por un JOIN debido a que no tiene sentido obtener todos los departamentos si en la clausula **WHERE** se esta filtrando las ubicaciones.
+
+Como punto extra, se le agrego el alias "cantidad_empleados" a la columna del conteo de empleados para un mejor entendimiento.
+
+**CONSULTA CORREGIDA**
+
+```sql
+SELECT d.department_name, 
+       COUNT(e.employee_id) AS cantidad_empleados
+FROM hr.departments d
+LEFT JOIN hr.employees e 
+ON d.department_id = e.department_id
+JOIN hr.locations l 
+ON d.location_id = l.location_id
+WHERE l.country_id = 'US'
+GROUP BY d.department_name;
+```
+
+### Consulta I.4: El empleado mejor pagado de cada departamento
+
+**SALIDA DE LA CONSULTA SIN CORREGIR**
+
+<div style="display: flex; align-items: flex-start; gap: 30px;">
+ <div style="width: 45%;">
+
+```sql
+SELECT department_id, 
+       last_name, 
+       MAX(salary)
+FROM hr.employees
+GROUP BY department_id, 
+         last_name;
+```
+
+</div> <div style="width: 55%;">
+
+![Resultado del ejercicio](src/assets/projects/sql-avanzado/ConsultaErronea-Ejercicio4.png)
+
+</div> </div>
+
+**IDENTIFICACIÓN DE ERRORES**
+
+El error de esta consulta, esta causando un error en el resultado bastante evidente. Como se puede ver a simple vista, se pueden ver departamentos "repetidos"... Pero... ¿Por qué?
+
+Esto sucede debido a que se está incluyendo la columna "last_name" en el **GROUP BY** de la consulta, haciendo que la funcion **MAX(salary)** no se calcule solo para cada departamento sino que tambien por cada apellido que pertenezca a un departamento, lo que termina dando como respuesta practicamente elsalario propio de cada empleado.
+
+**SALIDA DE LA CONSULTA CORREGIDA**
+
+<div style="display: flex; align-items: flex-start; gap: 30px;">
+ <div style="width: 45%;">
+
+```sql
+SELECT department_id,
+       MAX(salary) AS mejor_pagado
+FROM hr.employees
+GROUP BY department_id;
+```
+
+</div> <div style="width: 55%;">
+
+![Resultado del ejercicio](src/assets/projects/sql-avanzado/ConsultaCorrecta-Ejercicio4.png)
+
+</div> </div>
+
+### Consulta I.5: Promedio de comisión de la compañía, contando como cero a quienes no reciben comisión
+
+**CONSULTA SIN CORREGIR**
+
+```sql
+SELECT AVG(commission_pct)
+FROM hr.employees;
+```
+
+**IDENTIFICACIÓN DE ERRORES**
+
+El problema de esta consulta es que al hacer el calculo del promedio de la comisión de los empleados, no se esta tomando en cuenta los valores nulos (Es decir, personas que no reciben comisión). Esto puede pasar desapercibido debido a que el error sería en el calculo final del mismo.
+
+**CONSULTA CORREGIDA**
+
+```sql
+SELECT AVG(NVL(commission_pct, 0)) AS prom_commission
+FROM hr.employees;
+
+```
+
 ## Scripts de la solución del taller
 
 - Aquí puedes descargar el script SQL con la solucion de los puntos de la primera parte del taller.
 
-  [📥 Descargar primera parte](/downloads/Ejercicios_SQLAvanzado.sql)
+  [📥 Descargar primera parte](/downloads/taller-sql-avanzado/Ejercicios_SQLAvanzado_PT1.sql)
 
 - Aquí puedes descargar el script SQL con la solución de los puntos de la segunda parte del taller.
+
+  [📥 Descargar segunda parte](/downloads/taller-sql-avanzado/Ejercicios_SQLAvanzado_PT2.sql)

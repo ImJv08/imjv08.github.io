@@ -91,6 +91,20 @@ const projectCategories = defineCollection({
   }),
 });
 
+// Blog Categories collection
+const blogCategories = defineCollection({
+  loader: glob({
+    pattern: "**/*.{md,mdoc,yaml}",
+    base: "./src/content/blogCategories",
+  }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    icon: z.string().optional(),
+    sortOrder: z.number().optional().default(0),
+  }),
+});
+
 // Projects collection
 const projects = defineCollection({
   loader: glob({
@@ -141,6 +155,7 @@ const blog = defineCollection({
       publishDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
       tags: z.array(z.string()).optional(),
+      category: z.string().optional(),
       contentSidebar: contentSidebarSchema,
     }),
 });
@@ -219,6 +234,7 @@ export const collections = {
   work,
   education,
   projectCategories,
+  blogCategories,
   projects,
   hackathons,
   blog,

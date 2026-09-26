@@ -75,12 +75,41 @@ const origin = Astro.url.origin;
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={`${origin}/images/og_home.png`} />
   </head>
+
   <body class="min-h-screen">
+
+    <!-- Navigation -->
+    {Astro.url.pathname === "/" && (
+  <nav
+    id="main-nav"
+    class="fixed top-0 left-0 right-0 z-40 bg-base-100/80 backdrop-blur-md border-b border-base-300"
+  >
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex items-center justify-center gap-8 h-16">
+
+        <a href="/#about" class="nav-link" data-section="about">
+          Sobre mí
+        </a>
+
+        <a href="/#projects" class="nav-link" data-section="projects">
+          Evidencias
+        </a>
+
+        <a href="/#blog" class="nav-link" data-section="blog">
+          Conocimientos personales
+        </a>
+
+      </div>
+    </div>
+  </nav>
+)}
+
     <!-- Theme Controls - Fixed Position -->
     <div class="fixed top-4 right-4 z-50">
       {general.enableThemeSelector ? <ThemeSelector /> : <ThemeToggle />}
     </div>
 
+    <!-- Page Content -->
     <slot />
 
     {
@@ -92,6 +121,7 @@ const origin = Astro.url.origin;
               (link) => link.displayOn !== "dock"
             )}
           />
+
           {/* Dock for mobile - show 'both' and 'dock' items */}
           <Dock
             extraLinks={general.extraLinks.filter(
@@ -102,10 +132,72 @@ const origin = Astro.url.origin;
       )
     }
 
+    <!-- Navigation Script -->
+    <script>
+      function updateActiveSection() {
+        const sections = ["inicio", "about", "projects", "blog"];
+
+        let currentSection = "inicio";
+
+        for (const id of sections) {
+          const section = document.getElementById(id);
+
+          if (section) {
+            const rect = section.getBoundingClientRect();
+
+            if (rect.top <= 120) {
+              currentSection = id;
+            }
+          }
+        }
+
+        document
+          .querySelectorAll(".nav-link[data-section]")
+          .forEach((link) => {
+            link.classList.toggle(
+              "active",
+              link.getAttribute("data-section") === currentSection
+            );
+          });
+      }
+
+      window.addEventListener("scroll", updateActiveSection);
+      window.addEventListener("load", updateActiveSection);
+
+      document.addEventListener("astro:page-load", updateActiveSection);
+    </script>
+
     <!-- Smooth Scroll -->
     <style is:global>
       html {
         scroll-behavior: smooth;
+      }
+
+      /* Navigation */
+      #main-nav .nav-link {
+        position: relative;
+        padding: 0.5rem 0;
+        color: oklch(var(--bc) / 0.65);
+        transition: color 0.2s ease;
+      }
+
+      #main-nav .nav-link:hover {
+        color: oklch(var(--p));
+      }
+
+      #main-nav .nav-link.active {
+        color: oklch(var(--p));
+      }
+
+      #main-nav .nav-link.active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        background: oklch(var(--p));
+        border-radius: 999px;
       }
 
       /* Initial Page Load Blur-Fade Animation */
@@ -114,6 +206,7 @@ const origin = Astro.url.origin;
           opacity: 0;
           filter: blur(8px);
         }
+
         100% {
           opacity: 1;
           filter: blur(0px);
@@ -125,12 +218,13 @@ const origin = Astro.url.origin;
         animation-fill-mode: both;
       }
 
-      /* Blur Fade View Transitions (for page-to-page navigation) */
+      /* Blur Fade View Transitions */
       @keyframes blurFadeIn {
         0% {
           opacity: 0;
           filter: blur(10px);
         }
+
         100% {
           opacity: 1;
           filter: blur(0px);
@@ -142,11 +236,13 @@ const origin = Astro.url.origin;
           opacity: 1;
           filter: blur(0px);
         }
+
         100% {
           opacity: 0;
           filter: blur(10px);
         }
       }
     </style>
+
   </body>
 </html>

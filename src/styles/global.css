@@ -17,3 +17,29 @@ The name should be the same as the theme name below.
     valentine,
     dim;
 }
+
+#main-nav .nav-link {
+  position: relative;
+  padding: 0.5rem 0;
+  color: oklch(var(--bc) / 0.65);
+  transition: color 0.2s ease;
+}
+
+#main-nav .nav-link:hover {
+  color: oklch(var(--p));
+}
+
+#main-nav .nav-link.active {
+  color: oklch(var(--p));
+}
+
+#main-nav .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: oklch(var(--p));
+  border-radius: 999px;
+}
