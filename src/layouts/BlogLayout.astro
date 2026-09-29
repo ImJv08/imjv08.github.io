@@ -140,6 +140,7 @@ const readingTime = Math.ceil(wordCount / 200); // Average reading speed: 200 wo
 </Layout>
 
 <style>
+
   .article-body-shell {
     margin-inline: auto;
     max-width: 56rem;
@@ -177,6 +178,30 @@ const readingTime = Math.ceil(wordCount / 200); // Average reading speed: 200 wo
     .article-body-shell--left {
       grid-template-areas: "outline content";
       grid-template-columns: 16rem minmax(0, 1fr);
+    }
+
+    :global(.article-prose table) {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    :global(.article-prose table th:first-child),
+    :global(.article-prose table td:first-child) {
+      width: 55%;
+      vertical-align: middle;
+    }
+
+    :global(.article-prose table th:last-child),
+    :global(.article-prose table td:last-child) {
+      width: 45%;
+      vertical-align: middle;
+    }
+
+    :global(.article-prose table img) {
+      width: 100%;
+      max-width: none;
+      height: auto;
+      margin: 0;
     }
   }
 </style>

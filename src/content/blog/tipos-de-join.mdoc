@@ -1,0 +1,227 @@
+---
+title: Tipos de JOINS en SQL
+description: >-
+  En esta sección se explican los diferentes tipos de JOINS en SQL, incluyendo INNER JOIN, LEFT JOIN, RIGHT JOIN,FULL OUTER JOIN, entre otros, 
+  con ejemplos prácticos para cada uno.
+image: '@assets/blog/tipos-de-join/tipos-join.png'
+published: true
+publishDate: 2026-08-20
+updatedDate: 2026-08-30
+tags:
+  - SQL Avanzado
+  - Joins
+category: sql-avanzado
+---
+
+## ¿Que es un JOIN?
+
+En SQL es común trabajar con múltiples tablas que contienen datos relacionados entre si. En algunas ocasiones, necesitamos
+combinar los datos de diferentes tablas para obtener información más completa. Es aqui donde entra el concepto de **JOINS**. 
+
+**JOIN** significa "unir" en ingles. Esta clausula nos permite combinar datos de dos o más tablas basándose en un campo común 
+entre ellas (Normalmente una clave primaria y una clave foránea).
+
+Existen varios tipos de JOIN que se pueden utilizar según los datos que se necesitan obtener y la relación entre las tablas.
+
+## Tipos de JOIN 
+
+### INNER JOIN
+
+Es el tipo de JOIN más utilizado. Devuelve todas las filas que existan en ambas tablas.
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/inner-join.png) | Pensemos en esto como encontrar la intersección entre dos conjuntos de datos. Solo los registros que tengan coincidencias correspondientes en ambas tablas aparecerán en el resultado final. Si una fila de la primera tabla no tiene una coincidencia en la segunda tabla, esa fila no se incluirá en el resultado. |
+
+**Ejemplo:**
+
+```sql
+SELECT 
+    e.employee_id,
+    e.last_name,
+    e.salary,
+    d.department_name
+FROM employees e
+INNER JOIN departments d
+    ON e.department_id = d.department_id;
+```
+En esta consulta, el INNER JOIN relaciona las tablas "employees" y "departments" por medio de 
+**"ON e.department_id = d.department_id"**. Esto nos permite obtener los empleados que tienen un
+departamento asociado.
+
+_**Nota:** JOIN sin especificar el tipo, por defecto, es un INNER JOIN._
+
+### LEFT JOIN (O LEFT OUTER JOIN)
+
+Devuelve todas las filas de la tabla izquierda y las coincidencias de la tabla derecha. Cuando no existe una coincidencia
+en la tabla derecha, se devuelven valores NULL para las columnas de la tabla derecha.
+
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/left-join.png) | Pensemos en esto como que tomamos todo el conjunto A (Incluyendo su intersección con el conjunto B) y rellenar con valores nulos los elementos que no pertenecen a B|
+
+**Ejemplo:**
+
+```sql
+SELECT
+    j.job_id,
+    j.job_title,
+    e.last_name,
+    e.salary
+FROM jobs j
+LEFT JOIN employees e
+    ON j.job_id = e.job_id;
+```
+
+En esta consulta, esl LEFT JOIN relaciona la tabla "employees" con la tabla "jobs" por medio de **"ON j.job_id = e.job_id"**. 
+Esto nos permite obtener todos los trabajos disponibles, incluyendo aquellos que no tienen empleados asignados.
+
+### LEFT JOIN SIN INCLUIR LA INTERSECCIÓN
+
+Como ya se vió en el punto anterior, el LEFT JOIN conserva todos los registros de la tabla izquierda y agrega la información
+que coincide de la tabla derecha. Sin embargo, si se agrega una condición en el **WHERE** para descartar los valores NULL,
+solo se mostraran los registros que que tengan una coincidencia en ambas.
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/left-join-null.png) | Pensemos en esto como que tomamos todo el conjunto A, excluyendo su intersección con el conjunto B. De esta manera, obtenemos únicamente los registros de A que no tienen una coincidencia en B.
+
+**Ejemplo:**
+
+```sql
+SELECTs
+    d.department_id,
+    d.department_name
+FROM departments d
+LEFT JOIN employees e
+    ON d.department_id = e.department_id
+WHERE e.employee_id IS NULL;
+```
+
+En esta consulta, el LEFT JOIN relaciona la tabla "departments" con la tabla "employees" por medio de **"ON d.department_id = e.department_id"**,
+pero en esta ocasión, al agregar la clausula **WHERE e.employee_id IS NULL**, se filtran los resultados para mostrar únicamente los departamentos 
+que no tienen empleados asignados.
+
+_**Nota:** Al hacer esto, el resultado termina siendo el mismo que si se hubiera utilizado un INNER JOIN._
+
+### RIGHT JOIN (O RIGHT OUTER JOIN)
+
+Esta clausula es como una imagen reflejada de LEFT JOIN. Devuelve todas las filas de la tabla derecha y las coincidencias de la
+tabla izquierda. Cuando no existe una coincidencia en la tabla izquierda, se devuelven valores NULL en las columnas de la tabla izquierda.
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/right-join.png) | Pensemos en esto como que tomamos todo el conjunto B (Incluyendo su intersección con el conjunto A) y rellenar con valores nulos los elementos que no pertenecen a A|
+
+**Ejemplo:**
+
+```sql
+SELECT
+    e.employee_id,
+    e.last_name,
+    j.job_id,
+    j.job_title
+FROM employees e
+RIGHT JOIN jobs j
+    ON e.job_id = j.job_id;
+```
+En esta consulta, el RIGHT JOIN relaciona la tabla "employees" con la tabla "jobs" por medio de **"ON e.job_id = j.job_id"**. 
+Esto nos permite obtener todos los trabajos disponibles, incluyendo aquellos que no tienen empleados asignados.
+
+### RIGHT JOIN SIN INCLUIR LA INTERSECCIÓN
+
+Como ya se vió en el punto anterior, el RIGHT JOIN conserva todos los registros de la tabla derecha y agrega la información
+que coincide de la tabla izquierda. Sin embargo, si se agrega una condición en el **WHERE** para descartar los valores NULL
+(asi como con el LEFT JOIN), solo se mostraran los registros que que tengan una coincidencia en ambas.
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/right-join-null.png) | Pensemos en esto como que tomamos todo el conjunto B, excluyendo su intersección con el conjunto A. De esta manera, obtenemos únicamente los registros de B que no tienen una coincidencia en A.
+
+**Ejemplo:**
+
+```sql
+SELECT
+    e.employee_id,
+    e.last_name,
+    j.job_id,
+    j.job_title
+FROM employees e
+RIGHT JOIN jobs j
+    ON e.job_id = j.job_id
+WHERE e.employee_id IS NULL;
+```
+
+En esta consulta, el RIGHT JOIN relaciona la tabla "employees" con la tabla "jobs" por medio de **"ON e.job_id = j.job_id"**,
+pero en esta ocasión, al agregar la clausula **WHERE e.employee_id IS NULL**, se filtran los resultados para mostrar únicamente 
+los trabajos que no tienen empleados asignados.
+
+### FULL OUTER JOIN
+
+Esta clausula combina los resultados de LEFT JOIN y RIGHT JOIN, es decir, devuelve todas las filas de ambas tablas. Si no hay
+coincidencia, los valores faltantes serán NULL.
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/full-outer-join.png) | Pensemos en esto como que tomamos todos los registros de ambos conjuntos. De esta manera, obtenemos todos los registros que tienen una coincidencia en ambos conjuntos.
+
+**Ejemplo:**
+
+```sql
+SELECT d.department_name, e.last_name
+FROM departments d
+FULL OUTER JOIN employees e
+ON d.department_id = e.department_id;
+```
+En esta consulta, el FULL OUTER JOIN relaciona la tabla "departments" con la tabla "employees" por medio de **"ON d.department_id = e.department_id"**,
+esto nos permite obtener los departamentos que tienen empleados asociados, departamentos sin empleados (Aparecen con "last_name = NULL") y
+empleados sin departamento (Aparecen con "department_name = NULL").
+
+### FULL OUTER JOIN SIN INCLUIR LA INTERSECCIÓN
+
+Como ya se vio en el punto anterior, el FULL OUTER JOIN conserva todos los registros de ambas tablas, incluyendo aquellos que no
+tienen coincidencias. Sin embargo, si se agrega una condición en el **WHERE** para descartar los valores NULL, solo se mostrarán
+los registros que no tienen una coincidencia en la otra tabla.
+
+| | |
+|---|---|
+| ![Resultado del ejercicio](src/assets/blog/tipos-de-join/full-outer-join-null.png) | Pensemos en esto como que tomamos todos los registros de ambos conjuntos, pero esta vez no se incluye la intersección. De esta manera, obtenemos todos los registros que no tienen una coincidencia en ambos conjuntos.
+
+**Ejemplo:**
+
+```sql
+SELECT d.department_name, e.last_name
+FROM departments d
+FULL OUTER JOIN employees e
+ON d.department_id = e.department_id
+WHERE d.department_id IS NULL
+   OR e.department_id IS NULL;
+```
+En esta consulta, el FULL OUTER JOIN relaciona la tabla "departments" con la tabla "employees" por medio de **"ON d.department_id = e.department_id"**.
+Sin embargo, al agregar la clausula **WHERE d.department_id IS NULL OR e.department_id IS NULL**, se filtran los resultados para mostrar únicamente
+los departamentos que no tienen empleados asociados y los empleados que no tienen departamento.
+
+### SELF JOIN
+
+Este es un concepto un poco más avanzado. Hace referencia a cuando dos tablas se relacionan entre si, generalmente se utilizan para
+representar relaciones jerárquicas o recursivas. 
+
+**Ejemplo:**
+
+```sql
+SELECT e.last_name AS empleado,
+       m.last_name AS gerente
+FROM HR.EMPLOYEES e
+LEFT JOIN HR.EMPLOYEES m
+ON e.manager_id = m.employee_id;
+```
+
+En esta consulta, se utiliza el LEFT JOIN para relacionar la tabla "employees" con ella misma, utilizando un alias para diferenciar entre
+los empleados y sus gerentes. La relacxión se establece a través de la columna "manager_id", que hace referencia al "employee_id" del gerente.
+Esto nos permite obtener una lista de empleados junto con el nombre de su gerente.
+
+## Referencias
+[1] https://blog.devgenius.io/master-sql-join-operations-your-complete-guide-to-database-table-relationships-d9acc9985737
+
+
