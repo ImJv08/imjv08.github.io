@@ -8,9 +8,9 @@ published: true
 publishDate: 2026-08-20
 updatedDate: 2026-08-30
 tags:
-  - SQL Avanzado
+  - SQL Basico
   - Joins
-category: sql-avanzado
+category: sql-basico
 ---
 
 ## ¿Que es un JOIN?
@@ -25,7 +25,7 @@ Existen varios tipos de JOIN que se pueden utilizar según los datos que se nece
 
 ## Tipos de JOIN 
 
-### INNER JOIN
+### 1. INNER JOIN
 
 Es el tipo de JOIN más utilizado. Devuelve todas las filas que existan en ambas tablas.
 
@@ -51,7 +51,7 @@ departamento asociado.
 
 _**Nota:** JOIN sin especificar el tipo, por defecto, es un INNER JOIN._
 
-### LEFT JOIN (O LEFT OUTER JOIN)
+### 2.LEFT JOIN (O LEFT OUTER JOIN)
 
 Devuelve todas las filas de la tabla izquierda y las coincidencias de la tabla derecha. Cuando no existe una coincidencia
 en la tabla derecha, se devuelven valores NULL para las columnas de la tabla derecha.
@@ -77,7 +77,7 @@ LEFT JOIN employees e
 En esta consulta, esl LEFT JOIN relaciona la tabla "employees" con la tabla "jobs" por medio de **"ON j.job_id = e.job_id"**. 
 Esto nos permite obtener todos los trabajos disponibles, incluyendo aquellos que no tienen empleados asignados.
 
-### LEFT JOIN SIN INCLUIR LA INTERSECCIÓN
+### 2.1 LEFT JOIN SIN INCLUIR LA INTERSECCIÓN
 
 Como ya se vió en el punto anterior, el LEFT JOIN conserva todos los registros de la tabla izquierda y agrega la información
 que coincide de la tabla derecha. Sin embargo, si se agrega una condición en el **WHERE** para descartar los valores NULL,
@@ -105,7 +105,7 @@ que no tienen empleados asignados.
 
 _**Nota:** Al hacer esto, el resultado termina siendo el mismo que si se hubiera utilizado un INNER JOIN._
 
-### RIGHT JOIN (O RIGHT OUTER JOIN)
+### 3. RIGHT JOIN (O RIGHT OUTER JOIN)
 
 Esta clausula es como una imagen reflejada de LEFT JOIN. Devuelve todas las filas de la tabla derecha y las coincidencias de la
 tabla izquierda. Cuando no existe una coincidencia en la tabla izquierda, se devuelven valores NULL en las columnas de la tabla izquierda.
@@ -129,7 +129,7 @@ RIGHT JOIN jobs j
 En esta consulta, el RIGHT JOIN relaciona la tabla "employees" con la tabla "jobs" por medio de **"ON e.job_id = j.job_id"**. 
 Esto nos permite obtener todos los trabajos disponibles, incluyendo aquellos que no tienen empleados asignados.
 
-### RIGHT JOIN SIN INCLUIR LA INTERSECCIÓN
+### 3.1 RIGHT JOIN SIN INCLUIR LA INTERSECCIÓN
 
 Como ya se vió en el punto anterior, el RIGHT JOIN conserva todos los registros de la tabla derecha y agrega la información
 que coincide de la tabla izquierda. Sin embargo, si se agrega una condición en el **WHERE** para descartar los valores NULL
@@ -157,7 +157,7 @@ En esta consulta, el RIGHT JOIN relaciona la tabla "employees" con la tabla "job
 pero en esta ocasión, al agregar la clausula **WHERE e.employee_id IS NULL**, se filtran los resultados para mostrar únicamente 
 los trabajos que no tienen empleados asignados.
 
-### FULL OUTER JOIN
+### 4. FULL OUTER JOIN
 
 Esta clausula combina los resultados de LEFT JOIN y RIGHT JOIN, es decir, devuelve todas las filas de ambas tablas. Si no hay
 coincidencia, los valores faltantes serán NULL.
@@ -178,7 +178,7 @@ En esta consulta, el FULL OUTER JOIN relaciona la tabla "departments" con la tab
 esto nos permite obtener los departamentos que tienen empleados asociados, departamentos sin empleados (Aparecen con "last_name = NULL") y
 empleados sin departamento (Aparecen con "department_name = NULL").
 
-### FULL OUTER JOIN SIN INCLUIR LA INTERSECCIÓN
+### 4.1 FULL OUTER JOIN SIN INCLUIR LA INTERSECCIÓN
 
 Como ya se vio en el punto anterior, el FULL OUTER JOIN conserva todos los registros de ambas tablas, incluyendo aquellos que no
 tienen coincidencias. Sin embargo, si se agrega una condición en el **WHERE** para descartar los valores NULL, solo se mostrarán
@@ -198,11 +198,11 @@ ON d.department_id = e.department_id
 WHERE d.department_id IS NULL
    OR e.department_id IS NULL;
 ```
-En esta consulta, el FULL OUTER JOIN relaciona la tabla "departments" con la tabla "employees" por medio de **"ON d.department_id = e.department_id"**.
+En esta consulta, el FULL OUTER JOIN relaciona la tabla "departments" con la tabla "employees" por medio de **"ON d.department_id = e.department_id"**s.
 Sin embargo, al agregar la clausula **WHERE d.department_id IS NULL OR e.department_id IS NULL**, se filtran los resultados para mostrar únicamente
 los departamentos que no tienen empleados asociados y los empleados que no tienen departamento.
 
-### SELF JOIN
+### 5. SELF JOIN
 
 Este es un concepto un poco más avanzado. Hace referencia a cuando dos tablas se relacionan entre si, generalmente se utilizan para
 representar relaciones jerárquicas o recursivas. 

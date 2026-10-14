@@ -166,10 +166,10 @@ SELECT E.EMPLOYEE_ID,
        E.LAST_NAME,
        (CASE
            WHEN NOT EXISTS (
-                            SELECT 1
-                            FROM HR.JOB_HISTORY J
-                            WHERE E.EMPLOYEE_ID = J.EMPLOYEE_ID
-                            )
+               SELECT 1
+               FROM CON_H C
+               WHERE E.EMPLOYEE_ID = C.EMPLOYEE_ID
+           )
            THEN 'SIN HISTORIAL'
            ELSE 'CON HISTORIAL'
         END

@@ -1,0 +1,154 @@
+---
+title: Funciones de Agregación y Agrupación en SQL
+description: >-
+  En esta sección se explican las funciones de agregación en SQL, incluyendo SUM, AVG, COUNT, MAX, MIN, entre otras,
+  con ejemplos prácticos para cada una.
+image: '@assets/blog/funciones-agregacion-agrupacion/agregacion-agrupacion.png'
+published: true
+publishDate: 2026-08-30
+updatedDate: 2026-09-03
+tags:
+  - SQL Basico
+  - Funciones de Agregación
+category: sql-basico
+---
+
+## FUNCIONES DE AGREGACIÓN
+
+### ¿Qué son las funciones de agregación?
+
+Son funciones que realizan cálculos sobre un conjunto de valores y devuelven un único valor. Esto permite calcular
+calculos como sumas, promedios, conteos, valores máximos y mínimos, entre otros. Estas funciones son muy útiles para obtener
+información resumida de los datos almacenados en una base de datos.
+
+### 1. SUM()
+
+Esta función devuelve la suma total de una columna numérica. Suele utilizarse cuando se necesita hallar el total de
+valores como ingresos.
+
+**Ejemplo:** Esta consulta devuelve la suma total de los salarios, sin considerar los NULL.
+
+```sql
+SELECT SUM(salary) AS total_salarios
+FROM employees;
+```
+
+### 2. COUNT()
+
+Esta función cuenta el número de filas de una tabla o el número de valores no nulos en una columna específica. 
+
+Esta funcion tiene dos variantes:
+
+- **COUNT(*)**: Cuenta todas las filas de la tabla, incluyendo aquellas que tienen valores NULL.
+
+**Ejemplo:** Esta consulta cuenta el número total de empleados en la tabla "employees", sin importar que alguna columna
+tenga valores NULL.
+
+```sql
+SELECT COUNT(*) AS total_empleados
+FROM employees;
+```
+
+- **COUNT(columna)**: Cuenta solo las filas que tienen valores no nulos en la columna especificada.
+
+**Ejemplo:** Esta consulta cuenta el número total de empleados no nulos en la columna "salary" de la tabla "employees".
+
+```sql
+SELECT COUNT(salary) AS total_salarios
+FROM employees;
+```
+
+### 3. AVG()
+
+Cuando se necesite calcular el promedio de una columna numérica, esta función es la ideal. Ignora los valores NULL y devuelve 
+el promedio de los valores no nulos.
+
+**Ejemplo:** Esta consulta devuelve el promedio de los salarios, sin considerar los NULL.
+
+```sql
+SELECT AVG(salary) AS promedio_salarios
+FROM employees;
+```
+
+### 4. MAX()
+
+Como su nombre lo indica, esta función devuelve el valor máximo de una columna. Es util para determinar el valor más alto
+en un conjunto de datos.
+
+
+**Ejemplo:** Esta consulta devuelve el salario más alto de todos los empleados, sin considerar los NULL.
+
+```sql
+SELECT MAX(salary) AS salario_maximo
+FROM employees;
+```
+_**NOTA:** Esta funcion puede aplicarse a columnas numéricas, de texto o de fecha._
+
+### 5. MIN()
+
+Por ultimo, pero no por eso menos importante, esta funcion devuelve el valor minimo de una columna.
+
+**Ejemplo:** Esta consulta devuelve el salario más bajo de todos los empleados, sin considerar los NULL.
+
+```sql
+SELECT MIN(salary) AS salario_minimo
+FROM employees;
+```
+_**NOTA:** Al igual que la funcion MAX, esta funcion puede aplicarse a columnas numéricas, de texto o de fecha.
+
+## FUNCIONES DE AGRUPACIÓN
+
+### ¿Qué son las funciones de agrupación?
+
+Su objetivo principal es agrupar múltiples filas de datos para devolver un solo resultado resumido. Esto es especialmente 
+útil cuando se desea analizar datos en función de categorías o grupos específicos.
+
+### 1. GROUP BY
+
+Agrupa las filas que tienen el mismo valor en una o varias columnas.
+
+**SIN GROUP BY ->** Se necesita calcular el promedio general de los salarios de los empleados, sin importar su departamento.
+
+```sql
+SELECT AVG(SALARY) AS PROMEDIO_SALARIO
+FROM EMPLOYEES;
+```
+
+**CON GROUP BY ->** Se necesita calcular el promedio de los empleados de cada departamento, 
+agrupando los resultados por el id del departamento.
+
+```sql
+SELECT DEPT_ID,
+       AVG(SALARY) AS PROMEDIO_SALARIO
+FROM EMPLOYEES
+GROUP BY DEPT_ID;
+```
+
+### 2. HAVING
+
+Se encarga de filtrar los resultados de una consulta después de que se haya aplicado la función de agrupación. 
+Es similar a la cláusula WHERE, pero se utiliza específicamente con funciones de agregación.
+
+**SIN HAVING ->** Se necesita calcular el promedio salarial por departamento, pero solamente considerando empleados
+que ganan más de 50,000.
+
+```sql
+SELECT DEPT_ID, 
+       AVG(SALARY) AS PROMEDIO_SALARIO
+FROM EMPLOYEES
+WHERE SALARY > 50000
+GROUP BY DEPT_ID;
+```
+
+**CON HAVING ->** Se necesita ver los departamentos cuyo salario promedio sea mayor a 50,000.
+
+```sql
+SELECT DEPT_ID,
+       AVG(SALARY) AS PROMEDIO_SALARIO
+FROM EMPLOYEES
+GROUP BY DEPT_ID
+HAVING AVG(SALARY) > 50000;
+```
+## Referencias
+
+[1] https://learnsql.es/blog/funciones-agregadas-sql-una-guia-completa-para-principiantes/
