@@ -1,0 +1,48 @@
+---
+title: Tabla DUAL en ORACLE SQL
+description: >-
+  En esta sección se explica la tabla DUAL en Oracle, su propósito y cómo se utiliza para realizar consultas que no 
+  requieren datos de una tabla específica.
+image: '@assets/blog/tabla-dual/tabla-dual.png'
+published: true
+publishDate: 2026-09-05
+updatedDate: 2026-09-10
+tags:
+  - SQL Basico
+  - Tabla DUAL
+category: sql-basico
+---
+
+## ¿Qué es la tabla DUAL?
+
+Es una tabla especial ede Oracle que contiene una sola fila y una sola columna tradicionalmente llamada "DUMMY".
+
+Su proposito principal es permitir ejecutar expresiones mediante un SELECT cuando no se necesita consultar una tabla.
+
+## ¿Cuando utilizarla?
+
+Cuando no se necesita consultar un valor de una tabla en especifico, pero se necesita calcular, obtener o probar un valor.
+
+_**NOTA:** La tabla DUAL no hace la operación de la funcion, sino que es un medio para poder ejecutar la funcion y obtener el resultado de la misma._
+
+## Ejemplo de uso
+
+- **Ejemplo 1:** Obtener la fecha actual.
+
+|  | |
+|---|---|
+| `SELECT SYSDATE FROM DUAL;` | ![Resultado del ejercicio](src/assets/blog/tabla-dual/sysdate.png)  |
+
+
+- **Ejemplo 2:** Obtener el valor de una expresión matemática.
+
+|  | |
+|---|---|
+| `SELECT 2 + 2 AS resultado FROM DUAL;` | ![Resultado del ejercicio](src/assets/blog/tabla-dual/calculo-matematico.png)  |
+
+
+- **Ejemplo 3:** Obtener el valor de una función.
+
+|  | |
+|---|---|
+| `SELECT UPPER('hola mundo') AS resultado FROM DUAL;` | ![Resultado del ejercicio](src/assets/blog/tabla-dual/funcion.png)  |

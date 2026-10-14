@@ -1,0 +1,116 @@
+---
+title: Subconsultas en SQL
+description: >-
+  En esta sección se explican las subconsultas en SQL, su propósito y cómo se utilizan para realizar consultas 
+  anidadas dentro de otras consultas.
+image: '@assets/blog/subconsultas/subconsultas.png'
+published: true
+publishDate: 2026-09-15
+updatedDate: 2026-09-20
+tags:
+  - SQL Avanzado
+  - Subconsultas
+category: sql-avanzado
+---
+
+Una subconsulta es, basicamente, una consulta dentro de otra consulta. La consulta interna se ejecuta primero, su resultado es
+usado por la consulta externa. Las subconsultas pueden ser utilizadas en cláusulas como SELECT, FROM, WHERE y HAVING.
+
+**¿Para que se usa?**
+
+Para comprobar datos, filtrar resultados o realizar operaciones mas complejas.
+
+## Tipos de subconsultas
+
+### 1. Subconsultas Escalares (De una sola fila)
+
+Una subconsulta escalar devuelve un único valor.
+
+**¿Cuando utilizarla?**
+Cuando se necesite comparar algo contra un único valor.
+
+**EJEMPLO:** Consultar los empleados cuyo salario es mayor al promedio de todos los salarios.
+
+```sql
+SELECT last_name,
+       salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) 
+                FROM employees);
+```
+
+### 2. Subconsultas de lista (De varias filas)
+
+Una subconsulta de lista devuelve más de un valor.
+
+**¿Cuando utilizarla?**
+Cuando se quiere comparar algo contra un conjunto de valores
+
+**EJEMPLO:** Consultar los empleados cuyo departamento se encuentra en la ubicación 1700.
+
+<div style="display: flex; align-items: flex-start; gap: 30px;">
+
+<div style="width: 45%;">
+
+```sql
+SELECT last_name,
+       dept_id
+FROM employees
+WHERE dept_id IN (SELECT dept_id 
+                  FROM departments 
+                  WHERE location_id = 1700);
+```
+
+### 3. Subconsultas de tabla derivada (De varias columnas y filas)
+
+Una subconsulta de tabla derivada devuelve varias filas y varias columnas, como una tabla temporal.
+
+**¿Cuando utilizarla?**
+Cuando se quiere utilizar el resultado de una subconsulta como si fuera una tabla.
+
+**EJEMPLO:** Consultar los empleados cuyo salario es igual al salario máximo de su departamento.
+
+```sql
+SELECT *
+FROM employees
+WHERE(dept_id, salary) IN (SELECT dept_id, 
+                           MAX(salary) 
+                           FROM employees 
+                           GROUP BY dept_id);
+```
+
+### 4. Subconsultas correlacionadas
+
+Una subconsulta correlacionada es aquella que depende de la fila que esta procesando la consulta externa.
+
+**¿Cuando utilizarla?**x
+Cuando el resultado de la subconsulta debe cambiar dependiendo de la fila actual de la consulta externa.
+
+**EJEMPLO:** Consultar los empleados cuyo salario es mayor al promedio de su propio departamento.
+
+```sql
+SELECT e.last_name,
+       e.salary,
+       e.dept_id
+FROM employees e
+WHERE e.salary > (SELECT AVG(e2.salary)
+                  FROM employees e2
+                  WHERE e2.dept_id = e.dept_id);
+```
+
+### 5. Subconsultas no correlacionadas
+
+Una subconsulta no correlacionada es aquella que no depende de la consulta externa y puede ejecutarse de manera independiente.
+
+**¿Cuando utilizarla?**
+Cuando el resultado de la subconsulta es independiente de la fila actual de la consulta externa.
+
+**EJEMPLO:** Consultar los empleados cuyo salario es mayor al promedio de todos los salarios.
+
+```sql
+SELECT last_name,
+       salary
+FROM employees
+WHERE salary > (SELECT AVG(salary)
+                FROM employees);
+```

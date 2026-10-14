@@ -1,0 +1,99 @@
+---
+title: Funciones de Ventana
+description: >-
+  En esta sección se explican las funciones de ventana en SQL, su propósito y cómo se utilizan para realizar cálculos
+  sobre un conjunto de filas relacionadas con la fila actual, permitiendo obtener resultados agregados sin
+    agrupar los datos.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-09-05
+updatedDate: 2026-09-10
+tags:
+  - SQL Avanzado
+  - Vistas
+category: sql-avanzado
+---
+
+Una funcion de ventana es una funcion que permite realizar calculos sobre un conjunto de filas relacionadas con la fila actual,
+pero sub agruparlos en una sola fila
+
+## GROUP BY VS FUNCION DE VENTANA
+
+Imaginemos que tenemos esta tabla
+
+| | | | 
+|---|---|---|
+|Ana|Ventas|3000|
+|Luis|Ventas|4000|
+|Pedro|Ventas|5000|
+
+- **GROUP BY:** Si queremos obtener el total de ventas por departamento, podemos usar la clausula GROUP BY.
+
+| | |
+|---|---|
+|Ventas|AVG = 4000|
+
+- **FUNCION DE VENTANA:** Si queremos obtener el total de ventas por departamento, pero sin agrupar los datos, podemos usar una funcion de ventana.
+
+| | | | |
+|---|---|---|---|
+|Ana|Ventas|3000|AVG = 4000|
+|Luis|Ventas|4000|AVG = 4000|
+|Pedro|Ventas|5000|AVG = 4000|
+
+**Idea principal:** GROUP BY combina filas, una funcion de ventana calcula sobre filas sin eliminarlas, permitiendo obtener resultados agregados sin 
+perder la información de las filas individuales.
+
+## Estructura general
+
+```sql
+funcion() OVER(                //Convierte una funcion de agregacion en una funcion de ventana
+PARTITION BY columna           //Divide las filas en grupos sin elimnarlas
+ORDER BY columna DESC/ASC)     //Organiza de forma ascendiente (ASC) o descendiente (DESC) segun los valores de una columna
+```
+
+## Ranking
+
+Sirven para determinar la posicion de una fila dentro de un conjunto de filas relacionadas.
+
+### 1. ROW_NUMBER()
+
+Esta funcion asigna un numero unico a cada fila. Aunque haya empate los numeros seran diferentes.
+
+|  | |
+|---|---|
+| `SELECT first_name, salary, ROW_NUMBER() OVER(ORDER BY salary DESC) FROM hr.employees;`| ![Resultado del ejercicio](src/assets/blog/funciones-ventana/row_number.png)  |
+
+### 2. RANK()
+
+Esta funcion asigna un numero a las filas considerando empates. Cuando hay empate, se les asigna el mismo numero, pero se saltan.
+
+|  | |
+|---|---|
+| `SELECT first_name, salary, RANK() OVER(ORDER BY salary DESC) FROM hr.employees;`| ![Resultado del ejercicio](src/assets/blog/funciones-ventana/rank.png)  |
+
+### 3. DENSE_RANK()
+
+Esta funcion asigna un numero a las filas considerando empates. Cuando hay empate se les asigna el mismo numero, sin saltos.
+
+|  | |
+|---|---|
+| `SELECT first_name, salary, DENSE_RANK() OVER(ORDER BY salary DESC) FROM hr.employees;`| ![Resultado del ejercicio](src/assets/blog/funciones-ventana/dense_rank.png)  |
+
+## Navegacion entre filas
+
+### 1. LAG()
+
+Esta funcion permite obtener un valor de una fila anterior a la fila actual dentro de un conjunto de filas relacionadas.
+
+|  | |
+|---|---|
+| `SELECT first_name, salary, LAG(salary) OVER (ORDER BY salary) FROM hr.employees;`| ![Resultado del ejercicio](src/assets/blog/funciones-ventana/lag.png)  |
+
+### 2. LEAD()
+
+Esta funcion permite obtener un valor de una fila posterior a la fila actual dentro de un conjunto de filas relacionadas.
+
+|  | |
+|---|---|
+| `SELECT first_name, salary, LEAD(salary) OVER (ORDER BY salary) FROM hr.employees;`| ![Resultado del ejercicio](src/assets/blog/funciones-ventana/lead.png)  |

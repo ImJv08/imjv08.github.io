@@ -1,0 +1,147 @@
+---
+title: Vistas en SQL
+description: >-
+  En esta seccion se explican las vistas en SQL, su propósito y cómo se utilizan para simplificar consultas complejas y 
+  mejorar la seguridad de los datos.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-08-30
+updatedDate: 2026-09-05
+tags:
+  - SQL Avanzado
+  - Vistas
+category: sql-avanzado
+---
+
+Una vista es un espacio de tabla virtual que se crea a partir de una consulta SELECT. No almacena datos físicamente, sino 
+que muestra los datos de una o más tablas subyacentes. Las vistas se utilizan para simplificar consultas complejas, mejorar 
+la seguridad de los datos y proporcionar una capa de abstracción sobre las tablas base.
+
+**Ejemplo:** 
+
+```sql
+CREATE VIEW empleados_vista AS
+SELECT employee_id,
+       first_name,
+       salary,
+       department_id
+FROM employees
+WHERE department_id = 30;
+```
+**AHORA SE PUEDE HACER:**
+
+```sql
+SELECT * FROM empleados_vista;
+```
+- Idea principal: La vista es como "una ventana" a los datos de la tabla base. Cuando se consulta la vista, Oracle ejecuta
+la consulta definida y muestra los datos correspondientes.
+
+## ¿Para que se utilizan?
+
+- Simplificar consultas complejas
+
+```sql
+SELECT e.employee_id,
+       e.first_name,
+       e.salary,
+       d.department_name,
+       j.job_title,
+       e.salary
+FROM employees e
+JOIN departments d ON e.department_id = d.department_id
+JOIN jobs j ON e.job_id = j.job_id
+WHERE e.salary > 5000;
+```
+
+Funciona perfectamente, pero es una consulta larga y compleja. Una vista permite guardar esta consulta y luego consultarla
+de manera más sencilla.
+
+- Seguridad (Ocultar información)
+
+Imaginemos que tenemos la siguiente tabla:
+
+|Empleados| 
+|---|
+|ID|
+|Nombre|
+|Salario|
+|Cuenta_bancaria|
+|Telefono| 
+
+Pero no queremos que el departamento de salarios pueda saber la cuenta bancaria, entonces...
+
+```sql
+CREATE VIEW emp AS
+SELECT id,
+       nombre,
+       salario,
+       telefono
+FROM employees;
+```
+
+**DATO CURIOSO:** Se le puede dar permisos para que solo pueda consultar la vista de esta manera:
+
+```sql
+GRANT SELECT ON emp TO departamento_salarios;
+```
+
+## Operaciones sobre una vista
+
+- INSERT 
+ 
+```sql
+INSERT INTO empleados_view (employee_id, first_name, salary, department_id)
+VALUES (101, 'Juan', 6000, 30);
+```
+
+- UPDATE
+
+```sql
+UPDATE empleados_view
+SET salary = 6500
+WHERE employee_id = 101;
+```
+
+- DELETE
+
+```sql
+DELETE FROM empleados_view
+WHERE employee_id = 101;
+```
+
+_**NOTA:** La vista es una ventana hacia la tabla base, asi que estas operaciones se ven reflejadas en las tablas
+que estan detras de ella. Sin embargo, hay algunas restricciones sobre las vistas que contienen joins, agregaciones o 
+subconsultas, y no todas las vistas son actualizables._
+
+## Clausulas de control de vistas
+
+### 1. WITH READ ONLY
+
+Esta clausula controla que la vista sea solo de lectura, es decir, que no se puedan realizar operaciones de INSERT, UPDATE o DELETE sobre ella.
+
+```sql
+CREATE VIEW emp_consulta AS
+SELECT employee_id,
+       first_name,
+       salary
+FROM employees
+WITH READ ONLY;
+```
+
+### 2. WITH CHECK OPTION
+
+Esta clausula controla que las modificaciones respeten las condiciones de la vista. Si se intenta insertar o actualizar un registro que 
+no cumpla con las condiciones de la vista, se generará un error.
+
+**Idea principal:** Puedes modificar los datos desde la vista, pero deben seguir la condicion de la vista.
+
+```sql
+CREATE VIEW emp_consulta AS
+SELECT employee_id,
+       first_name,
+       salary
+FROM employees
+WHERE department_id = 30
+WITH CHECK OPTION;
+```
+
