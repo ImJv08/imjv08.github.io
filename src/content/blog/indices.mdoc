@@ -1,0 +1,246 @@
+---
+title: Indices
+description: >-
+  En esta sección se explicara el concepto de indices, que son, para que sirven, cuando usarlos y exploraremos
+  los diferentes tipos de indices (o por lo menos la mayoria).
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-09-15
+updatedDate: 2026-09-20
+tags:
+  - Optimizacion
+  - Indices
+category: optimizacion
+---
+
+Un indice es una estructura de datis adicional de Oracle que mantiene asociada a una tabla y que permite localizar más eficientemente
+las filas que contienen determinados valores.
+
+Una analogia muy sencilla para entender como funcionan los indices es pensando en el indice de un libro: En lugar de recorrer todo
+el contenido para encontrar algo, utilizamos una estructura que nos indica donde buscar.
+
+**Problema que soluciona:** Evita tener que recorrer grandes cantidades de datos de la tabla para encontrar las filas que cumplen
+una condición de busqueda.
+
+## IDEA CONCEPTUAL
+
+|  | |
+|---|---|
+|Si se crea un indice sobre id cliente: |`CREATE INDEX IDX_VENTA_CLIENTE ON VENTA(id_cliente);`|
+
+Graficamente pasaria lo siguiente:
+
+![Resultado del ejercicio](src/assets/blog/indices/indices-explicacion.png)
+
+El indice puede mantener los valores de forma organizada y asocarlos con una referencia a la dilas correspondientes. Esto permite
+buscar dentro de esa estructura de una manera más eficiente.
+
+## Cláusulas principales de Indices
+
+### 1. UNIQUE
+
+```sql
+CREATE UNIQUE INDEX IX_NOMBRE_INDICE
+ON tabla(columna);
+```
+Crea un índice que prohibe que existan valores duplicados en la columna especificada. Si un usuario intenta insertar un dato que
+ya existe, Oracle rechazará la operación y arrojará un error.
+
+### 2. TABLESPACE
+
+```sql
+CREATE INDEX IX_NOMBRE_INDICE
+ON tabla(columna)
+TABLESPACE ts_indices;
+```
+Especifica el lugar fisico (Como un disco o area de almacenamiento llamada _tablespace_) donde se guardará el indice. Se usa para 
+separar los datos de las tablas de los indices y mejorar la velocidad de lectura/escritura.
+
+### 3. PARALLEL
+
+```sql
+CREATE INDEX IX_NOMBRE_INDICE
+ON tabla(columna)
+PARALLEL 4;
+```
+
+Divide el trabajo de creacion del indice entre 4 nucleos (hilos) del procesador de la base de datos simultaneamente. Es indispensable
+para crear indices en tablas muy grandes con millones de registros en pocos segundos.
+
+### 4. ONLINE
+
+```sql
+CREATE INDEX IX_NOMBRE_INDICE
+ON tabla(columna)
+ONLINE;
+```
+Permite que los usuarios e aplicaciones sigan haciendo INSERT, UPDATE o DELETE en la tabla especificada mientras el indice se está
+construyendo. Sin esta clausula, la tabla se bloquea por completo hasta que el índice termine de crearse.
+
+### 5. COMPUTE STATICS 
+
+
+```sql
+CREATE INDEX IX_NOMBRE_INDICE
+ON tabla(columna)
+COMPUTE STATICS;
+```
+
+Le ordena a Oracle calcular las estadisticas de uso del indice en el mismo instante en que lo fabrica. Esto evita tener que ejecutar
+manualmente el comando DBMS_STATS.GATHER_TABLE_STATS despues de crearlo.
+
+## Consultas adicionales
+
+Ademas de **CREATE INDEX ...** para crear un nuevo indice, me gustaria añadir dos consultas más que pueden resultar muy util:
+
+### 1. Ver indices de una tabla
+
+```sql
+SELECT index_name,
+       table_name
+FROM user_indexes
+WHERE table_name = "nombre_tabla";
+```
+
+### 2. Ver sobre que columna está un indice
+
+```sql
+SELECT index_name,
+       column_name,
+       column_position
+FROM user_ind_columns
+WHERE table_name = "nombre_tabla";
+```
+
+## Tipos de indices
+
+Oracle ofrece diferentes tipos de indices según lo que se necesite y los datos que se tienen. No es lo mismo buscar un dato unico
+como un numero de cedula que filtrar informacion masiva con pocas o muchas variantes. Elegir el tipo de indice correcto es un
+punto muy clave para la optimización de las consultas.
+
+### 1. B-Tree
+
+Este tipo de indice organiza los valores de manera que Oracle pueda llegar al valor buscando mediante pocos saltos, sin revisar
+toda la tabla.
+
+**Ejemplo:** Supongamos esta tabla:
+
+| id_venta | id_cliente | valor |
+|---|---|---:|
+| 1 | 105 | 50.000 |
+| 2 | 203 | 80.000 |
+| 3 | 105 | 30.000 |
+| 4 | 150 | 70.000 |
+| 5 | 203 | 90.000 |
+
+Al crear el indice, Oracle construye una estructura separada que conceptualmente se ve asi:
+
+![Resultado del ejercicio](src/assets/blog/indices/b-tree.png)
+
+**Indice compuesto o contatenado:** Un indice compuesto es un indice creado sobre más de una columna.
+
+- Ejemplo:
+
+```sql
+CREATE INDEX ix_cliente
+ON cliente(ciudad, nombre, edad);
+```
+
+|  | |
+|---|---|
+|![Resultado del ejercicio](src/assets/blog/indices/consulta1.png) |**Se puede aprovechar el indice:** Ciudad|
+
+|  | |
+|---|---|
+|![Resultado del ejercicio](src/assets/blog/indices/consulta2.png) |**Se puede aprovechar el indice:** Ciudad + Nombre|
+
+|  | |
+|---|---|
+|![Resultado del ejercicio](src/assets/blog/indices/consulta3.png) |**Se puede aprovechar el indice:** Ciudad + Nombre + Edad|
+
+|  | |
+|---|---|
+|![Resultado del ejercicio](src/assets/blog/indices/consulta4.png) |**Aqui aparece el problema** El indice comienza por **ciudad** pero estamos buscando directamente **nombre**|
+
+De esta ultima consulta, tenemos los siguientes conceptos:
+
+- **Prefijo izquierdo:**
+
+|  | |
+|---|---|
+|`CREATE INDEX ix_nombre ON tabla(A, B, C);`|Oracle puede aprovecharlo empezando por: (A), (A + B) o (A + B + C)|
+
+- **Skip Scan:** Oracle puede aprovechar un indice compuesto aunque la consulta no especifique la primera columna, dividiendo 
+conceptualmente el indie en varios grupos segun los distintos valores de esa primera columna.
+
+|  | |
+|---|---|
+|`CREATE INDEX ix_empleado ON empleado(departamento, apellido);`|Nosotros podemos hacer: `SELECT * FROM EMPLEADO WHERE apellido = 'García';`|
+
+### 2. Indice Bitmap
+
+Oracle utiliza una representación basada en bits (0 y 1) para indicar que filas tienen determinado valor.
+
+**¿Como funciona?**
+
+Imaginemos que tenemos la siguiente tabla:
+
+| | |
+|---|---|
+|ID|NOMBRE_CIUDAD|
+|1|Bogotá|
+|2|Cali|
+|3|Medellín|
+|4|Bogotá|
+|5|Cali|
+|6|Bogotá|
+
+Y creamos el indice Bitmap con la sentencia:
+
+```sql
+CREATE BITMAP INDEX ix_ciudad
+ON Ciudad(nombre_ciudad);
+```
+
+Oracle separaria la información de esta manera:
+
+- **Para Bogotá:** 1 0 0 1 0 1
+- **Para Cali:** 0 1 0 0 1 0
+- **Para Medellín:** 0 0 1 0 0 0
+
+- **¿Cuando es bueno utilizarlo?**
+
+Un indice bitmap funciona especialmente bien con columnas de **baja cardinalidad**. Por ejemplo, una columna que especifica el
+sexo solo tendria dos valores posibles: F o M, en este caso, un indice bitmap seria una buena opcion.
+
+### 3. Indice Funcional
+
+Aplicar funciones a la columna puede impedir que se aproveche el indice normal, por lo que se crea el indice sobre la expresión.
+
+**Ejemplo:** 
+
+- Imaginemos que creamos el siguiente indice:
+
+```sql
+CREATE INDEX ix_persona_nombre
+ON persona(nombre);
+```
+- Luego, hacemos la siguiente consulta:
+
+```sql
+SELECT *
+FROM persona
+WHERE UPPER(nombre) = "GARCIA";
+```
+**El problema:** La consulta esta buscando la información por medio de _**UPPER(nombre)**_ y el indice esta sobre el nombre de la
+persona, **sin ninguna función.**
+
+**¿Como se soluciona?**
+
+Se crea un **Indice funcional** que este sobre la funcion **UPPER(nombre)**.
+
+```sql
+CREATE INDEX ix_persona_nombre_upper
+ON persona(UPPER(nombre));
+```
+

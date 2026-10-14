@@ -1,0 +1,147 @@
+---
+title: Optimización de Consultas SQL
+description: >-
+  En esta sección se explican las técnicas y estrategias para optimizar consultas SQL, 
+  mejorando el rendimiento y la eficiencia de las mismas.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-09-10
+updatedDate: 2026-09-15
+tags:
+  - Optimizacion
+category: optimizacion
+---
+
+Optimizar es conseguir que el motor tenga buenas opciones para elegir y pueda escoger un camino
+eficiente para llegar a los datos.
+
+|  | |
+|---|---|
+|![Resultado del ejercicio](src/assets/blog/optimizacion/mapa-optimizacion.png) |**IDEA PRINCIPAL**  El optimizador de Oracle evalúa los diferentes planes de ejecución posibles para una consulta, calcula el costo estimado de cada uno en función de los recursos necesarios y selecciona el camino más eficiente.|
+
+## Optimizador
+
+|  | |
+|---|---|
+| `SELECT * FROM venta WHERE id_cliente = 1500;`| Esta consulta dice "Quiero las Ventas del cliente con id 1500" pero no esta diciendo cómo, eso lo dice Oracle|
+
+**Idea Principal**
+
+El optimizador toma los posibles caminos y les hace una **estimación del costo** para poder elegir el **mejor plan**.
+
+### ¿Que significa costo?
+
+Que tan "caro" estima Oracle que será ejecutar ese camino, en terminos de recursos internos. Este dato sale de la información que
+tiene Oracle de los datos, con esto puede calcular esta estimación.
+
+**IMPORTANTE** El costo no es una medición de lo que realmente ocurrió, es una estimación hecha antes de ejecutar la consulta.
+
+Teniendo en cuenta lo anterior, podemos decir que el optimizador necesita que nosotros le demos "insumos" para poder tomar sus decisiones.
+Aqui es donde entra el concepto de:
+
+## Estadisticas
+
+Las estadisticas son información resumida que Oracle mantiene sobre los datos y las estructuras de la base de datos para poder
+estimar qué tan grande es un conjunto de datos.
+
+**¿Que información guardan?**
+
+1. **Numero de filas:** Esto permite saber aproximadamente el tamaño logico de la tabla.
+2. **Numero de valores distintos:** Permiye darse una ideda de la distribucion de los datos.
+3. **Tamaño de la tabla:** Permite conocer cuanto espacio ocupa la informacion, especialmente en terminos de bloques.
+
+## Ejemplos
+
+### Ejemplo 1: Facil de estimar
+
+Imaginemos que tenemos:
+
+| |
+|---|
+|VENTAS|
+|300.000 Filas|
+
+|  | |
+|---|---|
+|Y se desea hacer la consulta: | `SELECT * FROM venta WHERE id_venta = 1500;`|
+
+**El optimizador de Oracle se pregunta:**
+
+- ¿Me conviene recorrer toda la tabla o buscar mediante un indice?
+- ¿Cuantas filas espero encontrar?
+
+Si el optimizador de Oracle sabe que id_venta identifica una sola venta, puede esperar encontrar solo una fila, por lo que el 
+optimizador pensaria que no tiene sentido leer las 300.000 filas, solo basta con  la fila con id_venta = 1500.
+
+### Ejemplo 2: Dificil de estimar
+
+Imaginemos que tenemos:
+
+| |
+|---|
+|VENTAS|
+|300.000 Filas|
+
+|  | |
+|---|---|
+|Y se desea hacer la consulta: | `SELECT * FROM venta WHERE id_cliente= 10`|
+
+**El optimizador de Oracle se pregunta:**
+
+- ¿Cuantas ventas tiene aproximadamente cada cliente?
+
+Podrian ser 10 ventas o 100.000, y esas dos pueden llevar a decisiones completamente diferentes. Aqui entra nuestro
+siguiente concepto.
+
+## Cardinalidad
+
+La cardinalidad es la cantidad de filas que una operacion o condición devuelve, por ejemplo:
+
+|  | |
+|---|---|
+|Y hacemos la siguiente consulta sabiendo que ese cliente ha hecho 3 ventas, se esperarian 3 filas, es decir, debe tener una cardinalidad de 3: | `SELECT * FROM venta WHERE id_cliente= 10`|
+
+- Pero **hay un problema**, Oracle todavia no ha ejecutado nada, por lo tanto, no sabe exactamente cuántas filas van a salir, 
+**tiene que estimarlas**.
+
+### Cardinalidad Estimada
+
+Se refiere a la cantidad de filas que Oracle cree o estima que producirá una operación antes de ejecutarla.
+
+**¿De donde se obtiene esta estimación?** Toma los datos de las estadisticas y obtiene un valor estimado segun esos datos.
+
+- Por ejemplo: Oracle puede conocer segun las estadisticas que:
+
+| |
+|---|
+|VENTAS|
+|300.000 Filas|
+|20.000 Clientes Estimados|
+
+Una estimación conceptual sencilla podría ser:
+300.000 Filas ÷ 20.000 Clientes = 15 filas por cliente Aprox.
+
+**IMPORTANTE** No se debe asumir que Oracle siempre calcula la cardinalidad simplemente dividiendo. El optimizador de Oracle
+utiliza modelos de estimación más sofisticados.
+
+## Selectividad
+
+|  | |
+|---|---|
+|![Resultado del ejercicio](src/assets/blog/optimizacion/mapa-selectividad.png) |La selectividad se refiere a cuantas filas espera obtener una condición y como este resultado influye en que camino puede resultar más eficiente llegar a este resultado.|
+
+**¿Como se actualizan las estadisticas?**
+
+En una base de datos normal, esta actualización se suele hacer de manera automatica, pero el problema puede aparecer despues de 
+una carga masiva de datos, por esta razon, existe una manera de actualizar estas estadisticas de forma manual:
+
+```sql
+EXEC DBMS_STATS.GATHER_TABLE_STATS(
+  USER,
+  'VENTA',
+  cascade => TRUE
+);
+```
+
+**Nota:** DBMS_STATS es el paquete de Oracle utilizado para gestionar/recolectar estadisticas del optimizador.
+

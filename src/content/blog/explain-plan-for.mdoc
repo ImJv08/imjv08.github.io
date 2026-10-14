@@ -1,0 +1,76 @@
+---
+title: Explain Plan For
+description: >-
+  En esta seccion se explicara el concepto de Explain Plan For, que es, y como se pueden interpretar sus resultados.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-09-25
+updatedDate: 2026-09-30
+tags:
+  - Optimizacion
+  - Hints
+category: optimizacion
+---
+
+Es una sentencia de Oracle que permite obtener el plan de ejecución estimado que el optimizador considera para una consulta, sin
+ejecutarla.
+
+```sql
+// Calcula y almacena el plan estimado
+
+EXPLAIN PLAN FOR
+SELECT COUNT(*)
+FROM transferencia
+WHERE estado = 'APLICADA';
+
+//Muestra el plan de ejecución
+
+SELECT *
+FROM TABLE(DBMS_XPLAN_DISPLAY(
+           FORMAT => 'BASIC +COST +ROWS'
+));
+```
+
+## Respuesta de EXPLAIN PLAN FOR
+
+Al ejecutar este tipo de consultas, se puede obtener el siguiente tipo de resultado
+
+![Resultado del ejercicio](src/assets/blog/explain-plan-for/salida-plan.png)
+
+### ID
+
+Es el número identificador unico de cada linea u operacion dentro del plan.
+
+### Operation
+
+Es la acción matemática o lógica especifica que ejecutará la base de datos en ese paso
+
+**Ejemplos comunes:**
+
+- **SELECT STATEMENT:** Representa la sentencia completa que estamos ejecutando/analizando. Es el nodo principal del arbol
+del plan.
+- **TABLE ACCESS FULL:** Oracle estima que debe hacer un escaneo completo de la tabla.
+- **SORT AGGREGATE:** Ocurre cuando se utilizan funciones de agregación, como SUM, AVG, MIN, MAX o COUNT, devolviendo una fila
+unica como resultado.
+- **INDEX RANGE SCAN:** Oracle lee el indice buscando un rango de valores o un valor que puede estar duplicado. Recorre el arbol
+del indice desde la raiz hasta las hojas y luego se mueve horizontalmente.
+
+Suele ocurrir cuando se utilizan operadores de rango como <,>, BETWEEN, o LIKE. Incluso cuando se utiliza = pero la columna no es unica.
+
+- **INDEX FAST FULL SCAN:** Oracle tiene que reccorer gran parte o todo el indice. Es la alternativa de _TABLE ACCESS FULL_.
+- **TABLE ACCESS BY INDEX ROWID:** El indice existente no tiene toda la información necesaria para responder la consulta.
+- **HASH JOIN** o **NESTED LOOPS:** Hacen referencia a los metodos que usa para unir dos tablas.
+
+### Name
+
+El nombre del objeto fisico afectado por la operacion.
+
+### Rows
+
+Esta columna hace referencia a la cardinalidad estimada de la consulta, es decir, la cantidad de filas que el optimizador de Oracle
+calcula estadisticamente que va a procesar o devolver en ese paso especifico.
+
+### Cost (%CPU)
+
+Esta columna hace referencia al costo estimado de ejecución de la consulta, la cual representa una unidad de medida abstracta que
+calcula Oracle sumando los recursos de lectura/escritura en disco y el uso del procesador que costara esa operacion.

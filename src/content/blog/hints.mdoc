@@ -1,0 +1,147 @@
+---
+title: Hints
+description: >-
+  En esta seccion se explicara el concepto de "Hints", que es, y cuales son los diferentes tipos.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-09-20
+updatedDate: 2026-09-25
+tags:
+  - Optimizacion
+  - Hints
+category: optimizacion
+---
+
+Un hint es una indicación que se coloca dentro de una sentencia SQL para decirle al optimizador:
+
+| | | |
+|---|---|---|
+| |"Prefiero que consideres esta forma de ejecutar la consulta"| |
+
+Existen diferentes tipos de hints, los cuales cada uno se utiliza dependiendo de las necesidades o lo que se busca lograr
+con la consulta:
+
+## Hints de Acceso
+
+Estos Hints le indican indican al optimizador como se quiere acceder a los datos
+
+### INDEX
+
+Le indica al optimizador que utilice el indice especificado para encontrar el resultado de la consulta
+
+```sql
+SELECT /*+ INDEX(c ix_nombre)*/ 
+      *
+FROM CLIENTE c
+WHERE nombre = 'Juana';
+```
+
+### FULL
+
+Le indica al optimizador que para encontrar el resultado de la consulta realice un recorrido completo ("FULL TABLE SCAN") de la tabla.
+
+```sql
+SELECT /*+ FULL(c)*/
+      *
+FROM CLIENTE c
+WHERE ciudad = 'Bogotá';
+```
+
+_**Nota:** Puede ser la mejor opción cuando se necesitan muchas filas_
+
+### INDEX_FFS
+
+Le indica al optimizador que haga un recorrido rapido de todo el indice para encontrar el resultado de la consulta.
+
+```sql
+SELECT /*+ INDEX_FFS (c ix_nombre)*/
+       nombre
+FROM CLIENTE c;
+```
+
+## Hints relacionados con JOIN
+
+Este tipo de hints le indican al optimizador que metodo de JOIN se prefiere para encontrar el resultado de una consulta.
+
+### USE_NL (Nested Loops)
+
+```sql
+SELECT /*+ USE_NL(v)*/
+       *
+FROM CLIENTE c
+JOIN VENTA v
+ON c.id_cliente = v.id_cliente;
+```
+
+**IDEA PRINCIPAL:** Por cada fila de cliente, buscar coincidencias en venta.
+
+### HASH JOIN
+
+Le indica al optimizador que construya una estructura hash, para despues procesar las tablas y buscar coincidencias.
+
+```sql
+SELECT /*+ USE_HASH(v)*/
+       *
+FROM CLIENTE c
+JOIN VENTA v
+ON c.id_cliente = v.id_cliente;
+```
+### MERGE JOIN
+
+La idea de este es trabajas con las fuentes ordenadas por la clave del JOIN, para que Oracle pueda recorrer ambas secuencias
+y combinarlas.
+
+```sql
+SELECT /*+ USE_MERGE(v)*/
+       *
+FROM CLIENTE c
+JOIN VENTA v
+ON c.id_cliente = v.id_cliente;
+```
+
+### LEADING
+
+Le dice al optimizador quien deberia entrar primero en el orden del JOIN.
+
+```sql
+SELECT /*+ LEADING(c)*/
+       *
+FROM CLIENTE c
+JOIN VENTA v
+ON c.id_cliente = v.id_cliente;
+```
+
+**IDEA PRINCIPAL**
+
+Primero Cliente --> Segundo Venta
+
+## Hint de paralelismos
+
+Este tipo de Hiny orienta una operación para utilizar procesamiento en paralelo.
+
+### PARALLEL
+
+```sql
+SELECT /*+ PARALLEL(4)*/
+      *
+FROM VENTA;
+```
+
+**CONCEPTUALMENTE**
+
+![Resultado del ejercicio](src/assets/blog/hints/parallel.png)
+
+**IMPORTANTE** Más paralelismo no significa más velocidad, /*+PARALLEL(500) */ podria saturar la maquina.
+
+## Hint para Insert
+
+### APPEND
+
+La idea de este hint es orientar la operación hacia inserción directa, aprovechando espacio nuevo de la tabla en lugar de
+seguir necesariamente el camino convencional de inserción.
+
+```sql
+INSERT /*+ APPEND*/ INTO VENTA_HISTORICA
+SELECT *
+FROM VENTA;
+```
