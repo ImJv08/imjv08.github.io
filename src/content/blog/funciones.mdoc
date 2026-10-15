@@ -1,0 +1,341 @@
+---
+title: Funciones Almacenadas en PL/SQL
+description: >-
+  En esta secciones veremos que son las funciones almacenadas en PL/SQL, como se utilizan y para que funcionan.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-10-01
+updatedDate: 2026-10-05
+tags:
+  - PL/SQL
+  - Funciones Almacenadas
+category: pl-sql
+---
+
+Una función es una unidad de PL/SQL que queda guardada en la base de datos y que debe devolver un valor.
+
+**¿Que significa que la función sea almacenada?**
+
+Significa que, a diferencia de un Bloque PL/SQL que se ejecuta y luego desaparece (Es decir, un bloque anonimo),
+una funcion creada con **CREATE FUNCION** queda guardada como objeto en la base de datos.
+
+## Estructura de una funcion
+
+```sql
+CREATE OR REPLACE FUNCION fn_nombre_funcion(p_param IN NUMBER) -- CREATE crea la funcion. REPLACE la reemplaza si ya existe
+RETURN NUMBER                   --"Esta funcion devuelve una variable de tipo NUMBER"
+IS
+    vn_variable1 NUMBER;        -- Parte declarativa de la funcion
+    -- Funciones
+    -- Constantes
+    -- Cursores
+    -- Etc...
+
+BEGIN
+    RETURN vn_variable1;        -- Parte ejecutable de la funcion
+
+END fn_nombre_funcion;          
+/
+```       
+_**Nota:** Una funcion debe terminar devolviendo un valor, sino, ORA-06503._
+
+### Parametros
+
+Si se tiene la siguiente funcion:
+
+```sql
+CREATE OR REPLACE FUNCTION fn_nota_definitiva (
+  p_corte1 IN NUMBER,
+  p_corte2 IN NUMBER,
+  p_corte3 IN NUMBER DEFAULT 0)
+RETURN NUMBER
+IS
+  c_peso_final CONSTANT NUMBER := 0.4;
+  v_nota NUMBER(3,2);
+BEGIN
+  v_nota := ROUND(p_corte1*0.3 + p_corte2*0.3 + p_corte3*c_peso_final, 2);
+  RETURN v_nota;
+END fn_nota_definitiva;
+/
+```
+Existen diferentes tipos de parametros para poder usar esta función dependiendo lo que se necesite:
+
+- Parametros posicionales
+
+
+Se puede hacer:
+
+```sql
+fn_nota_definitiva(3.5, 4.0, 2.8);
+```
+
+Oracle interpreta:
+- 3.5 -> p_corte1
+- 4.0 -> p_corte2
+- 2.8 -> p_corte3
+
+En este caso de parametros, el orden en el que ingresen importa.
+
+- Parametros nombrados
+
+Tambien se puede hacer:
+
+```sql
+fn_nota_definitiva(
+    p_corte1 => 3.5,
+    p_corte3 => 2.8,
+    p_corte2 => 4.0
+);
+```
+
+En este caso ya no depende del orden porque se está diciendo explicitamente que parametro recibe el valor.
+
+- Parametros mixtos
+
+Tambien se puede hacer:
+
+```sql
+fn_nota_definitiva(
+    3.5,
+    p_corte3 => 2.8,
+    p_corte2 => 4.0
+);
+```
+
+**Regla:** Primero los parametros posicionales y despues los nombrados.
+
+## Funciones dentro de SQL
+
+Una funcion puede utilizarse dentro de `SELECT` pero no cualquier función puede ejecutarse desde SQL.
+
+### Condiciones
+
+Hay 4 condiciones importantes para esto:
+
+1. Parametros IN -> Los parametros deben ser IN.
+2. Tipos SQL -> Los parametros y el retorno deben utilizar tipos que SQL puede manejar.
+
+**SQL Oracle Conoce:**
+
+- NUMBER
+- VARCHAR2
+- DATE
+- CLOB
+
+**PL/SQL tiene tipos como:**
+
+- BOOLEAN
+- RECORD
+
+3. No DML/COMMIT/ROLLBACK/DDL
+
+Una funcion invocada desde una consulta SQL no puede realizar ninguna de estas acciones. Si se intenta, puede aparecer ORA-14151.
+
+4. No modificar la misma tabla que esta leyendo la consulta, esto puede causar ORA-04091, conocido como **problema de tabla mutante**.
+
+## Clausulas importantes
+
+### DEFAULT
+
+Le da un valor por defecto a un parametro.
+
+**Ejemplo**
+
+```sql
+p1  IN NUMBER DEFAULT 0;
+```
+_"Si el usuario no proporciona un dato, se utilizara el valor de 0 por defecto"_
+
+### PRAGMA UDF
+
+Significa que se esta indicando que la función esta pensada para utilizarse desde SQL y Oracle puede optimizar.
+
+**Ejemplo**
+
+```sql
+CREATE OR REPLACE FUNCTION fn_iva (
+    p_valor IN NUMBER
+)
+RETURN NUMBER
+IS
+    PRAGMA UDF;
+BEGIN
+    RETURN ROUND(p_valor * 0.19, 2);
+END;
+/
+```
+_"No cambia el resultado de una funcion; busca mejorar el costo de invocarla desde SQL"_
+
+### DETERMINISTIC
+
+```sql
+CREATE OR REPLACE FUNCTION fn_limpia_nombre (
+    p_nombre IN VARCHAR2
+)
+RETURN VARCHAR2 DETERMINISTIC
+IS
+BEGIN
+    RETURN UPPER(TRIM(p_nombre));
+END;
+/
+```
+
+Se esta prometiendo que para las mismas entradas, la funcion siempre devuelve el mismo resultado.
+
+**Ejemplo**
+
+```sql
+fn_limpia_nombre(" Juan ")
+```
+
+Debera producir siempre `JUAN`
+
+**¿Por que es peligroso?**
+
+Porque Oracle confia en esta declaracion. Si la funcion la declaras con `DETERMINISTIC` pero la funcion depende de algo
+que puede cambiar, la promesa es falsa.
+
+**CONCLUSION**
+
+`DETERMINISTIC` no significa _"Oracle comprobo que mi funcion es determinista"_, significa _"Yo, como programador, le prometo
+a Oracle que esta funcion lo es"_.
+
+Si la promesa es falsa, pueden aparecer resultados incorrectos sin que necesariamente aparezca un error.
+
+### RESULT_CACHE
+
+Oracle puede guardar el resultado de una funcion para reutilizatlo posteriormente
+
+```sql
+CREATE OR REPLACE FUNCTION fn_cupo_programa (
+    p_id IN NUMBER
+)
+RETURN NUMBER RESULT_CACHE
+IS
+    v_cupo NUMBER;
+BEGIN
+    SELECT cupo
+    INTO v_cupo
+    FROM fn_programa
+    WHERE id_programa = p_id;
+
+    RETURN v_cupo;
+END;
+/
+``` 
+- Si se solicita repetidamente el resultado para los mismo valores, puede evitarse recalcular todo.
+
+### Diferencias entre DETERMINISTIC, RESULT_CACHE y PRAGMA UDF
+
+| | |
+|---|---|
+|**Concepto**|**Idea principal**|
+|DETERMINISTIC| Misma entrada -> Mismo resultado |
+|RESULT_CACHE| Guarda resultados para reutilizarlos |
+|PRAGMA UDF| Optimiza la invocacion desde SQL|
+
+### AUTHID
+
+La pregunta que responde esta clausula: **"¿Con los privilegios de quien se ejecuta la funcion?"**
+
+| | |
+|---|---|
+|**AUTHID DEFINER**|**AUTHID CURRENT_USER**|
+|El codigo se ejecuta usando siempre los permisos de la persona que creó la función, permitiendo a otros usuarios hacer acciones que normalmente tendria prohibido|El codigo se ejecuta usando estrictamente los permisos de la persona que lo esta corriendo en ese momento, limitandolo a lo que su propia cuenta tenga permitido|
+
+Los privilegios obtenidos mediante roles no aplican de la misma forma; los privilegios necesarios deben estar otorgados directamente
+al propietario del objeto.
+
+## Funciones dentro de paquetes
+
+Para guardar una funcion en un `PACKAGE` se debe separar en:
+
+### Especificación
+
+```sql
+CREATE OR REPLACE PACKAGE pk_notas IS
+
+    FUNCTION definitiva(
+        p1 NUMBER,
+        p2 NUMBER,
+        p3 NUMBER
+    ) RETURN NUMBER;
+
+END pk_notas;
+/
+```
+
+_"Este paquete ofrece una función llamada `definitiva` que recibe estos parametro y devuelve una variable de tipo NUMBER."_
+
+### Cuerpo
+
+```sql
+CREATE OR REPLACE PACKAGE BODY pk_notas IS
+
+    FUNCTION definitiva(
+        p1 NUMBER,
+        p2 NUMBER,
+        p3 NUMBER
+    ) RETURN NUMBER IS
+    BEGIN
+        RETURN ROUND(p1*.3+p2*.3+p3*.4,2);
+    END;
+
+END pk_notas;
+/
+```
+
+Aqui esta la implementación de la función que está en la especificación.
+
+### ¿Por que utilizar paquetes?
+
+Se puede cambiar el cuerpo sin afectar a quienes utilizan la funcion, mientras se mantenga la especificacion compatible.
+
+## Diagnostico
+
+**¿Que hago si la función no compila?**
+
+### SHOW ERRORS
+
+Inmediatamente despues de crear. Es una herramienta rapida para revisar errores
+
+```sql
+SHOW ERRORS
+```
+
+### USER_ERRORS
+
+```sql
+SELECT line, 
+       position, 
+       text
+FROM user_errors
+WHERE name = 'FN_NOTA_DEFINITIVA'
+ORDER BY sequence;
+```
+De esta consulta se puede obtener:
+- Linea
+- Posicion
+- Texto del error
+
+### USER_OBJECTS
+
+```sql
+SELECT object_name,
+       status,
+       last_ddl_time
+FROM user_objects
+WHERE object_type = 'FUNCTION';
+```
+
+Para conocer el estado:
+- VALID
+- INVALID
+
+### ALTER FUNCTION ... COMPILE
+
+```sql
+ALTER FUNCTION fn_nota_definitiva COMPILE;
+```
+
+Recompila la funcion para poder ver nuevamente los errores
