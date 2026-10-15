@@ -1,0 +1,479 @@
+---
+title: Procedimientos Almacenados en PL/SQL
+description: >-
+  En esta secciones veremos que son las procediemientos almacenados en PL/SQL, como se utilizan y para que funcionan.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-10-05
+updatedDate: 2026-10-07
+tags:
+  - PL/SQL
+  - Procedimientos almacenados
+category: pl-sql
+---
+
+Un procedimiento almacenado es una unidad de codigo PL/SQL que queda guardada en la base de datos y que sirve principalmente
+para ejecutar una acción: insertar, actualizar, eliminar, registrar algo, realizar varias operaciones, etc...
+
+La diferencia con una funcion es:
+
+_"La función calcula y devuelve un valor; el procedimiento ejecuta una acción"_
+
+## Procedimiento VS Funcion VS Bloque anonimo
+| | | | |
+|---|---|---|---|
+|**Caracteristica**|**Bloque anonimo**|**Funcion**|**Procedimiento**|
+|Se almacena en BD| ❌ | ✅ | ✅ |
+|Devuelve un valor obligatorio| ❌ | ✅ | ❌ |
+|Puede modificar datos| ✅ | Si, pero con restricciones | ✅ |
+|Se puede llamar desde SQL| ❌ | Si, pero con restricciones | ✅ |
+|Se puede reutilizar| ❌ | ✅ | ✅ |
+|Uso tipico| Probar codigo | Calcular | Ejecutar acciones |
+
+_Si el nombre es un **sustantivo**, normalmente es una funcion; si es un **verbo de acción**, normalmente es un procedimiento_
+
+**Por ejemplo**
+
+```sql
+-- FUNCIÓN
+v_promedio := calcular_promedio(4, 5, 3);
+
+-- PROCEDIMIENTO
+registrar_matricula(101, 55, v_id);
+```
+
+## Estructura de un procedimiento
+
+```sql
+CREATE OR REPLACE PROCEDURE SP_nombre_procedimiento (
+    parametros
+)
+IS
+    -- Variables
+
+BEGIN 
+
+    -- Instrucciones
+
+EXCEPTION
+
+    -- Manejo de errores
+
+END SP_nombre_procedimiento;
+/
+```
+
+### Parametros
+
+Son los datos que entran o salen del procedimiento. Existen 3 tipos de parametros en los procedimientos.
+
+- **IN:** Es un parametro de entrada
+
+ ```sql
+p_id_estudiante IN NUMBER
+```
+
+_"El procedimiento recibe el valor y lo puede leer"_
+
+**Por defecto** los parametros son IN, es decir
+
+| | | |
+|---|---|---|
+|`p_id NUMBER`| Equivale a: |`p_id IN NUMBER`|
+
+- **OUT:** Es un parametro de salida
+
+ ```sql
+p_matricula OUT NUMBER
+```
+_"El procedimiento lo utiliza para devolverle un resultado al programa que lo llamó"_
+
+**Por ejemplo:**
+
+```sql
+CREATE OR REPLACE PROCEDURE SP_obtener_doble(
+    p_numero IN NUMBER,
+    p_resultado OUT NUMBER
+)
+IS
+BEGIN
+    p_resultado := p_numero * 2;
+END;
+/
+```
+
+Se puede llamar en un bloque anonimo:
+
+```sql
+DECLARE
+    v_resultado NUMBER;
+BEGIN
+    obtener_doble(5, v_resultado);
+
+    DBMS_OUTPUT.PUT_LINE(v_resultado);
+END;
+/
+```
+
+El resultado sera `10`.
+
+**IMPORTANTE** Un `OUT` necesita una variable al momento de invocarlo.
+
+No se puede hacer:
+
+```sql
+obtener_doble(5, 10); 
+```
+
+Porque 10 no es una variable donde el procedimiento pueda guardar el resultado.
+
+- **IN OUT:** Es un parametro que puede entrar y salir modificado del procedimiento.
+
+```sql
+p_numero IN OUT NUMBER
+```
+
+**Ejemplo**
+
+```sql
+CREATE OR REPLACE PROCEDURE incrementar(
+    p_numero IN OUT NUMBER
+)
+IS
+BEGIN
+    p_numero := p_numero + 1;
+END;
+/
+```
+
+Se puede llamar desde un bloque anonimo:
+
+```sql
+DECLARE
+    v_numero NUMBER := 10;
+BEGIN
+    incrementar(v_numero);
+
+    DBMS_OUTPUT.PUT_LINE(v_numero);
+END;
+/
+```
+
+El resultado sera `11`.
+
+- **NO COPY:** Es una **sugerencia** para que Oracle utilice el parametro en lugar de hacer una copia de este. Este es utilizado
+en parametros `OUT` o `IN OUT`.
+
+| | |
+|---|---|
+|**SIN NOCOPY**|**CON NOCOPY**|
+|vn_numero = 100|vn_numero = 100|
+|_"Hago una copia"_|_"Misma variable_"|
+|pn_numero = 101|vn_numero|
+|_"Al terminar, reflejo el resultado"_|_"Si puedes, trabaja directamente sobre la variable que te pase, sin hacer esa copia inmediata"_|
+|vn_numero = 101|vn_numero = 101|
+
+```sql
+CREATE OR REPLACE PROCEDURE SP_nombre_procedimiento(
+    pn_numero IN OUT NOCOPY NUMBER
+)
+```
+
+## ¿Como se invoca un procedimiento?
+
+### Desde SQL Developer
+
+```sql
+EXEC pr_registrar_matricula(101, 55, :v_id);
+
+PRINT v_id;
+```
+
+### Desde un Bloque PL/SQL
+
+```sql
+DECLARE
+    v_id NUMBER;
+BEGIN
+
+    pr_registrar_matricula(
+        p_id_estudiante => 101,
+        p_id_asignatura => 55,
+        p_id_matricula  => v_id
+    );
+
+END;
+/
+```
+## Clausulas importantes
+
+### RETURNING INTO
+
+Insertar el registro y obtener inmediatamente el valor generado de una columna.
+
+```sql
+INSERT INTO empleados(nombre)
+VALUES ('Ana')
+RETURNING employee_id INTO v_id;
+```
+
+### SELECT ... FOR UPDATE
+
+Bloquea la fila para que otra sesion no pueda modificarla mientras esta transaccion esta trabajando con ella.
+
+**La transaccion no empieza ni termina con el procedimiento**
+
+Una transaccion comienza con la primera sentencia DML de la sesion y termina con `COMMIT` o `ROLLBACK`.
+
+**Por ejemplo:**
+
+```sql
+CREATE PROCEDURE actualizar_datos
+IS
+BEGIN
+    UPDATE tabla1 ...;
+    UPDATE tabla2 ...;
+    UPDATE tabla3 ...;
+END;
+```
+
+_Si falla el tercer `UPDATE`, los primeros cambios no desaparecen automaticamente de toda la transaccion, siguen formando parte
+hasta ue alguien haga `COMMIT` o `ROLLBACK`.
+
+**¿Debe un procedimiento hace COMMIT?**
+
+Normalmente un procedimiento no deberia hacer COMMIT, porque puede formar parte de una operación más grande.
+
+- procedimientoA()
+ - procedimientoB()
+ - procedimientoC()
+ - COMMIT()
+ 
+Si el procedimiento A hace COMMIT, ya confirmo sus cambios aunque despues dalle el procedimiento C
+
+
+## Excepciones en procedimientos
+
+Que ocurra una excepcion no significa automaticamente que toda la transaccion haya hecho ROLLBACK.
+
+### RAISE
+
+```sql
+EXCEPTION
+    
+    WHEN OTHERS THEN
+        --Primero se registra el error
+        INSERT INTO pr_log_error (...);
+        --Volvemos a lanzar el error
+        RAISE;
+END;
+```
+
+**¿Por que es importante?**
+
+Porque si solo se registra el error, el procedimiento puede terminar aparentemente bien y el programa que lo llamó puede pensar
+que todo salio correctamente, cuando realmente ocurrio un error.
+
+### DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
+
+Sirve para obtener informacion sobre donde ocurrio el error, incluyendo la traza
+
+```sql
+INSERT INTO pr_log_error (
+    fecha,
+    unidad,
+    codigo,
+    mensaje,
+    traza
+)
+VALUES (
+    SYSTIMESTAMP,
+    'pr_registrar_matricula',
+    SQLCODE,
+    SQLERRM,
+    DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
+);
+```
+
+- **SQLCODE:** Código numerico del error
+- **SQLERRM:** Mensaje del error
+
+### SAVEPOINT
+
+En lugar de hacer un `COMMIT`, se puede establecer un punto de retorno (Como un tipo de _"checkpoint"_)
+
+**Ejemplo:**
+
+```sql
+CREATE OR REPLACE PROCEDURE SP_procesar_venta(
+    p_producto_id NUMBER,
+    p_cantidad NUMBER
+) IS
+BEGIN
+    UPDATE inventario
+    SET stock = stock - p_cantidad
+    WHERE id_producto = p_producto_id;
+
+    --Se establece el punto de retorno
+    SAVEPOINT inventario_listo;
+
+    BEGIN
+        INSERT INTO pagos_tarjeta(producto_id, monto, estado)
+        VALUES (p_producto_id, p_cantidad, 'PAGO');
+
+        DBMS_OUTPUT.PUT_LINE('Se ha realizado la compra correctamente');
+    
+    EXCEPTION
+        WHEN OTHERS THEN
+            --Deshacer los cambios que causaron el error
+            ROLLBACK TO inventario_listo;
+
+            --Se cambia el estado del pago a "PENDIENTE" debido al error que ocurrio
+            INSERT INTO pagos_tarjeta(producto_id, monto, estado)
+            VALUES (p_producto_id, p_cantidad, 'PENDIENTE');
+
+            RAISE;
+    END;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE;
+END;
+/
+```
+Este procedimiento se encarga de gestionar la venta de un producto dividiendo la operacion en dos fases logicas gracias al
+uso de un subbloque y un **punto de restauracion** (`SAVEPOINT`).
+
+Su objetivo principal es garantizar que, si el pago con tarjeta falla, el descuento del inventario no se pierda, sino que se
+mantenga y la venta se registre con el estado "PENDIENTE".
+
+### PRAGMA AUTONOMOUS_TRANSACTION
+
+Crea una transacción independiente dentro del procedimiento
+
+```sql
+CREATE OR REPLACE PROCEDURE pr_log (...)
+IS
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    INSERT INTO pr_log_error (...);
+
+    COMMIT;
+END;
+/
+```
+
+**¿Por que sirve?**
+
+Sirve para cosas como una auditoria o registro de errores que debe sobrevivir aunque la operacion principal haga ROLLBACK.
+
+_**Nota:** Una transaccion autonoma debe terminar con COMMIT o ROLLBACK_
+
+### BULK COLLECT
+
+Cuando se hace un DML fila por fila hay muchos cambios de contexto. `BULK COLLECT` permite traer **muchas filas de una sola vez**.
+
+```sql
+FETCH c BULK COLLECT INTO v_ids LIMIT 500;
+```
+
+`LIMIT` evita intentar cargar toda la tabla en memoria de una vez, en este caso: _maximo 500 registros por lote_
+
+### FORALL
+
+Permite ejecutar DML para muchos elementos
+
+```sql
+FORALL k IN 1..v_ids.COUNT
+    UPDATE pr_matricula
+    SET estado = 'ACT'
+    WHERE id_matricula = v_ids(k);
+```
+
+### SAVE EXCEPTIONS
+
+Aparece junto con `FORALL`. 
+
+**Sin esta clausula**, un error puede detener el procedimiento del lote; **Con esta clausula**, Oracle puede continuar procesando
+el lote y posteriormente revisar cuales operaciones fallaron.
+
+```sql
+FORALL k IN 1..v_ids.COUNT SAVE EXCEPTIONS
+```
+
+Los errores se pueden revisar mediante:
+
+```sql
+SQL%BULK_EXCEPTIONS
+```
+## Privilegios
+
+### EXECUTE
+
+Una cosa interesante de los procedimientos es que se pueden dar permiso para ejecutar el procedimiento sin necesariamente dar
+acceso directo a las tablas
+
+**Por ejemplo:**
+
+```sql
+GRANT EXECUTE ON sp_registrar_matricula TO app_user;
+```
+
+Esto permite exponer operaciones controladas. Para invocar un procedimiento **de otro esquema** se necesita `EXECUTE` sobre
+el objeto.
+
+### AUTHID
+
+La pregunta que responde esta clausula: **"¿Con los privilegios de quien se ejecuta la funcion?"**
+
+| | |
+|---|---|
+|**AUTHID DEFINER**|**AUTHID CURRENT_USER**|
+|El codigo se ejecuta usando siempre los permisos de la persona que creó la función, permitiendo a otros usuarios hacer acciones que normalmente tendria prohibido|El codigo se ejecuta usando estrictamente los permisos de la persona que lo esta corriendo en ese momento, limitandolo a lo que su propia cuenta tenga permitido|
+
+Los privilegios obtenidos mediante roles no aplican de la misma forma; los privilegios necesarios deben estar otorgados directamente
+al propietario del objeto.
+
+## Dependencias e INVALID
+
+Si un procedimento depende de una tabla, y la estructura de esta tabla es modificada, Oracle puede marcar el procedimiento como
+`INVALID`. Luego Oracle puede intentar recompilarlo cuando vuelva a utilizarse.
+
+Esto se puede consultar mediante:
+
+```sql
+SELECT object_name, object_type, status
+FROM user_objects
+WHERE status = 'INVALID';
+
+-- Y recompilar
+
+ALTER PACKAGE pk_matricula COMPILE BODY;
+
+-- O para un procedimiento
+
+ALTER PROCEDURE nombre COMPILE;
+```
+
+## Procedimientos dentro de paquetes
+
+Si se declara algo en la parte de la especificacion, es publico; Si solamente se declara dentro del `PACKAGE BODY` es privado.
+
+### Sobrecarga - Overloading
+
+Dentro de un paquete puedes tener procedimientos con el mismo nombre pero diferentes parametros.
+
+**Por ejemplo:**
+```sql
+PROCEDURE buscar(p_id NUMBER);
+PROCEDURE buscar(p_nombre VARCHAR2);
+```
+_El nombre es el mismo, pero Oracle puede distinguirlos por los parametros_
+
+## Errores importantes
+
+|**Numero del error**|**Que lo causa**|**Solucion**|
+|---|---|---|
+|PLS-00306|Numero o tipo de argumento incorrecto|Revisar los parametros o usar notacion nombrada|
+|`OUT` llega `NULL`|Una ruta del procedimiento nunca aigno el parametro|Revisar el codigo del procedimiento|
+|ORA-04068|Cuando se recompila un paquete que tiene **estado de paquete** mientras existen sesiones activas| - - - |
+| - - - | Error que se pierde | Utilizar la clausula `RAISE` en un `WHEN OTHERS THEN`|
