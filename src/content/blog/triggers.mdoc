@@ -1,0 +1,513 @@
+---
+title: Triggers en PL/SQL
+description: >-
+  En esta secciones veremos que son los triggers en PL/SQL, como se utilizan y para que funcionan.
+image: '@assets/blog/vistas/vistas.png'
+published: true
+publishDate: 2026-10-07
+updatedDate: 2026-10-08
+tags:
+  - PL/SQL
+  - Triggers
+category: pl-sql
+---
+
+Un trigger es un bloque de codigo PL/SQL almacenado en la base de datos que se ejecuta automaticamente cuando ocurre
+un evento determinado.
+
+La diferencia fundamental con una funcion o un procedimiento es que no necesitas llamarlo manualmente, ya que el se activa solo
+cuando sucede el evento para el cual fue definido.
+
+**Por ejemplo**, imaginemos que tenemos una tabla `ESTUDIANTE` de la cual se quiere registrar automaticamente la fecha en que se
+modifica una nota. Se puede crear un trigger que se active cada vez que alguien actualice esa columna.
+
+```sql
+CREATE OR REPLACE TRIGGER TGR_BU_fecha
+BEFORE UPDATE OF nota ON estudiante
+FOR EACH ROW
+BEGIN
+    :NEW.fecha_modificacion := SYSDATE;
+END;
+/
+```
+
+## Estructura de un trigger
+
+- **CREATE OR REPLACE TRIGGER TGR_BU_FECHA:** Crea el trigger o reemplaza uno existente con el mismo nombre
+- **BEFORE:** Se ejecuta antes de la operacion
+- **UPDATE OF nota:** Se activa ante una actualizacion que incluya la columna `nota`.
+- **ON estudiante:** La tabla sobre la que actua.
+- **FOR EACH ROW:** Se ejecuta una vez por cada fila afectada.
+- **:NEW.fecha_modificacion := SYSDATE:** Establece la fecha de modificacion que tendra la fila.
+
+## Clasificacion segun el tipo de trigger
+
+### Triggers DML simples
+
+Son los triggers más comunes. Se ejecutan cuando ocurre una operacion DML (INSERT, UPDATE o DELETE) sobre una tabla o vista.
+
+**¿Para que sirven?** Para validar datos, completar valores automaticamente o registrar cambios en una tabla de auditoria.
+
+**Ejemplo:** Impedir que se registre un empleado con un salario negativo.
+
+```sql
+CREATE OR REPLACE TRIGGER TGR_B_VALIDAR_salario
+BEFORE INSERT OR UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    IF :NEW.salary < 0 THEN
+        RAISE_APPLICATION_ERROR(
+            -20001,
+            'El salario no puede ser negativo'
+        );
+    END IF;
+END;
+/
+```
+
+_En este caso, si el salario es negativo, se genera un error y la operacion no puede completarse normalmente_
+
+### Triggers INSTEAD OF
+
+Se utilizan especialmente cuando se necesita realizar operaciones DML sobre **una vista que no permite modificarse directamente**
+de la manera requerida.
+
+En lugar de ejecutar la operación solicitada sobre la vista, el trigger ejecuta otras instrucciones, generalmente sobre las
+tablas que estan detras de ella.
+
+- Imaginemos una vista que combina empleados y departamentos:
+
+```sql
+CREATE VIEW VW_vista_empleados AS
+SELECT e.employee_id,
+       e.last_name,
+       d.department_name
+FROM employees e
+JOIN departments d
+    ON e.department_id = d.department_id;
+```
+
+Si se intenta insertar directamente en esta vista, Oracle puede no permitirlo porque combina información de varias tablas.
+Un trigger `INSTEAD OF` puede indicar como insertar los datos en la tabla correspondiente.
+
+**Estructura basica**
+
+```sql
+CREATE OR REPLACE TRIGGER trg_insertar_vista_empleados
+INSTEAD OF INSERT ON VW_vista_empleados
+FOR EACH ROW
+DECLARE
+    v_department_id departments.department_id%TYPE;
+BEGIN
+    SELECT department_id
+    INTO v_department_id
+    FROM departments
+    WHERE department_name = :NEW.department_name;
+
+    INSERT INTO employees (employee_id,last_name,department_id)
+    VALUES (:NEW.employee_id,:NEW.last_name,v_department_id);
+END;
+/
+```
+
+`INSTEAD OF` significa _en lugar de_. El trigger reemplaza la operacion de insercion solicitada por las instrucciones que se
+escriben en el cuerpo.
+
+`FOR EACH ROW` indica que se ejecuta cada fila que se intenta insertar en la vista. Los triggers INSTEAD OF sobre vistas son
+**siempre** triggers por fila.
+
+**¿Cual es la diferencia entre `BEFORE` y `INSTEAD OF`?**
+
+`BEFORE` ejecuta el trigger antes de una operacion sobre la tabla o vista; `INSTEAD OF` reemplaza la operacion solicitada por
+otra logica, normalmente para permitir modificar una vista compleja.
+
+### Triggers compuestos
+
+Un Trigger compuesto permite definir varias secciones de ejecucion dentro de un mismo trigger. Puede incluir secciones como:
+
+- **BEFORE STATEMENT:** Antes de comenzar la sentencia
+- **BEFORE EACH ROW:** Antes de procesar cada fila
+- **AFTER EACH ROW:** Despues de procesar cada fila
+- **AFTER STATEMENT:** Despues de terminar de procesar todas las filas
+
+_**Nota:** No es obligatorio utilizar las cuatro secciones_
+
+**¿Cual es su utilidad principal?**
+
+Una aplicacion importante es ayudar a resolver el problema de la **tabla mutante** (ORA-04091). Este error puede aparecer cuando un trigger
+por fila intenta consultar o modificar la misma tabla que esta siendo modificada por la sentencia que lo activó.
+
+Para solucionar esto, se puede guardar la informacion durante el procesamiento de cada fila y se hace la consulta cuando la
+sentencia termina.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_compuesto_empleados
+FOR UPDATE OF salary ON employees
+COMPOUND TRIGGER
+
+    -- Variable compartida por todas las secciones
+    v_total_empleados NUMBER;
+
+    BEFORE STATEMENT IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE(
+            'Comienza la actualización de salarios'
+        );
+    END BEFORE STATEMENT;
+
+    AFTER EACH ROW IS
+    BEGIN
+        DBMS_OUTPUT.PUT_LINE(
+            'Se actualizó el empleado: ' || :NEW.employee_id
+        );
+    END AFTER EACH ROW;
+
+    AFTER STATEMENT IS
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_total_empleados
+        FROM employees;
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Total de empleados: ' || v_total_empleados
+        );
+    END AFTER STATEMENT;
+
+END trg_compuesto_empleados;
+/
+```
+
+**¿Que hace cada seccion?**
+
+- **BEFORE STATEMENT:** Se ejecuta una sola vez antes de que comience la sentencia `UPDATE`, independientemente de cuantos
+empleados se vayan a modificar.
+
+- **AFTER EACH ROW:** Se ejecuta despues de procesar cada fila. Por eso, si se actualizan 5 empleados, esta seccion se ejecuta 5 veces.
+Aqui podemos consultar _:NEW.employee_id_ para identificar el empleado procesado.
+
+- **AFTER STATEMENT:** Se ejecuta una sola vez cuando termina de procesarse la sentencia. Aqui consultamos _employees_ para contar
+los empleados, evitando hacerlo desde la seccion por fila.
+
+**¿Como se ejecutaria?**
+
+Supongamos que ejecutamos, sabiendo que hay 3 empleados en ese departamento:
+
+```sql
+UPDATE employees
+SET salary = salary * 1.10
+WHERE department_id = 50;
+```
+
+El orden seria:
+1. Se ejecuta `BEFORE STATEMENT` una vez.
+2. Se procesa el primer empleado y se ejecuta con `AFTER EACH ROW`
+3. Se procesa el segundo empleado y se ejecuta con `AFTER EACH ROW`
+4. Se procesa el tercer empleado y se ejecuta con `AFTER EACH ROW`
+5. Se ejecuta `AFTER STATEMENT` una vez y se consulta el total de empleados.
+
+La salida seria algo como:
+
+Comienza la actualización de salarios
+Se actualizó el empleado: 100
+Se actualizó el empleado: 101
+Se actualizó el empleado: 102
+Total de empleados: 107
+
+### Triggers de sistema y DDL
+
+Estos triggers reaccionan a enventos relacionados con la base de datos o con el sistema, en lugar de limitarse a cambios de filas
+mediante `INSERT`,`UPDATE` o `DELETE`.
+
+Entre los eventos que pueden activarlos estan:
+- CREATE: Creación de objetos
+- ALTER: Modificación de objetos
+- DROP: Eliminacion de objetos
+- LOGON: Inicio de sesion
+- LOGOFF: Cierre de sesion
+- SERVERERROR: Determinados errores del servidor
+
+Por ejemplo, un trigger DDL puede registrar cuando se elimina una tabla o cuando se crea un objeto en un esquema.
+
+**Estructura ilustrativa**
+
+```sql
+CREATE OR REPLACE TRIGGER trg_auditar_ddl
+AFTER DDL ON SCHEMA
+BEGIN
+    -- Registrar el evento DDL
+    NULL;
+END;
+/
+```
+
+_Aqui `AFTER DDL ON SCHEMA` indica que el trigger se ejecuta despues de un evento DDL dentro del esquema correspondiente_
+
+**¿Que diferencia hay entre un trigger DML y uno DDL?**
+
+El DML reacciona a cambios en los datos de las tablas, como insertar, actualizar o eliminar registros. El DDL 
+reacciona a cambios en la estructura de la base de datos, como crear, alterar o eliminar objetos.
+
+## Clasificacion segun el alcance
+
+### Trigger por fila: `FOR EACH ROW`
+
+Se ejecuta una vez por cada fila afectada por la operación
+
+**Ejemplo:** Un `UPDATE` modifica 5 empleados -> El trigger se ejecuta 5 veces.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_por_fila
+AFTER UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    -- Se ejecuta por cada empleado modificado
+    NULL;
+END;
+/
+```
+
+_**Nota:** Permite utilizar `:OLD` y `:NEW` para consultar los valores de cada registro._
+
+### Trigger por sentencia: `sin FOR EACH ROW`
+
+Se ejecuta una sola vez por cada sentencia que lo activa, independientemente del numero de filas afectadas.
+
+**Ejemplo:** Un `UPDATE` modifica 5 empleados -> El trigger se ejecuta 1 vez
+
+```sql
+CREATE OR REPLACE TRIGGER trg_por_sentencia
+AFTER UPDATE ON employees
+BEGIN
+    -- Se ejecuta una vez por la sentencia
+    NULL;
+END;
+/
+```
+
+_**Nota:** No tienen acceso a los valores de `:OLD` y `:NEW`._
+
+## `BEFORE` y `AFTER`: ¿Cual es la diferencia?
+
+- `BEFORE` se ejecuta antes de que Oracle realice la operacion DML sobre las filas.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_nota
+BEFORE INSERT ON inscripcion
+FOR EACH ROW
+BEGIN
+    :NEW.nota := 0;
+END;
+/
+```
+_Antes de insertar cada inscripcion, el trigger establece la nota en 0, independientemente del valor que se hubiera preparado para
+insertar_
+
+- `AFTER` se ejecuta despues de que Oracle realice esa operacion y verifique las restricciones correspondientes para las filas
+afectadas.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_auditar
+AFTER INSERT ON inscripcion
+FOR EACH ROW
+BEGIN
+    INSERT INTO auditoria (id, operacion)
+    VALUES (:NEW.id_inscripcion, 'INSERT');
+END;
+/
+```
+
+_Despues de cada inscripcion, el trigger registra la operacion de auditoria_
+
+**Pregunta trampa:** ¿Puedes cambiar _:NEW.nota_ dentro de un trigger `AFTER INSERT ON... FOR EACH ROW`?
+
+No. La fila ya fue escrita. Si se necesita cambiar el valor de la fila que se va a insertar o actualizar, se debe hacer
+en un trigger `BEFORE` de fila.
+
+En cambio, si se necesita reaccionar al cambio ya realizado o analizar el resultado completo de una sentencia, un `AFTER`
+puede ser apropiado.
+
+## Valores nuevos y anteriores
+
+- `:OLD` Valores que tenia la fila antes de la operacion.
+- `:NEW` Valores que tendra la fila despues de la operacion, o los que se van a insertar.
+
+|**Evento**|**:OLD**|**:NEW**|
+|---|---|---|
+|`INSERT`| Todos sus campos son **NULL**| Valores que se van a insertar |
+|`UPDATE`| Valores anteriores | Valores nuevos |
+|`DELETE`| Valores que se van a borrar | Todos sus campos son **NULL**|
+
+**Ejemplo:** Detectar un cambio de salario
+
+Supongamos que un empleado gana 2.000.000 y le actualizan el sueldo a 2.500.500
+
+```sql
+CREATE OR REPLACE TRIGGER trg_salario
+AFTER UPDATE OF salario ON empleado
+FOR EACH ROW
+BEGIN
+    INSERT INTO auditoria_salario (salario_anterior,salario_nuevo)
+    VALUES (:OLD.salario,:NEW.salario);
+END;
+/
+```
+
+El registro de auditoria tendra:
+- :OLD.salario = 2.000.000
+- :NEW.salario = 2.500.000
+
+**¿Para que sirve la clausula `WHEN` en triggers?**
+
+Se pueden agregar condiciones para que el trigger por fila solo actue cuando se cumpla determinado criterio.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_salario
+BEFORE UPDATE OF salario ON empleado
+FOR EACH ROW
+WHEN (NEW.salario <> OLD.salario)
+BEGIN
+    :NEW.fecha_modificacion := SYSDATE;
+END;
+/
+```
+
+_Aqui el trigger solo ejecuta su cuerpo cuando el salario nuevo es distinto del anterior_
+
+**IMPORTANTE** Dentro del cuerpo se escribe **:NEW.salario**; En la clausula WHEN se escribe **NEW.salario**, sin los dos puntos.
+
+## Predicados condicionales
+
+Son condiciones que permiten averiguar que operacion provoco el disparador
+
+|**Predicado**|**Significado**|
+|---|---|
+|`INSERTING`|La operacion que activo el trigger es un **INSERT**|
+|`UPDATING`|La operacion es un **UPDATE**|
+|`DELETING`|La operacion es un **DELETE**|
+
+Son bastante utiles cuando se crea un solo trigger para varios eventos.
+
+```sql
+CREATE OR REPLACE TRIGGER trg_auditoria
+AFTER INSERT OR UPDATE OR DELETE ON empleado
+FOR EACH ROW
+DECLARE
+    v_operacion VARCHAR2(10);
+BEGIN
+    IF INSERTING THEN
+        v_operacion := 'INSERT';
+    ELSIF UPDATING THEN
+        v_operacion := 'UPDATE';
+    ELSIF DELETING THEN
+        v_operacion := 'DELETE';
+    END IF;
+
+    INSERT INTO auditoria (operacion, id_empleado)
+    VALUES (
+        v_operacion,
+        COALESCE(:NEW.id_empleado, :OLD.id_empleado)
+    );
+END;
+/
+```
+_En este ejemplo, `COALESCE` toma el primer valor que no sea nulo. Asi se obtiene el identificador nuevo para un `INSERT`
+o el anterior para un `DELETE`, suponiendo que el identificador no sea nulo._
+
+**¿Por que es importante?** Porque en un `DELETE`, _:NEW_ esta vacio, por lo que si se intentara obtener el identificador
+unicamente de _:NEW_, se perderia el dato.
+
+## Controlar el orden entre triggers
+
+Puede haber varios triggers que respondan al mismo evento y momento. Si no se especifica una relacion de orden, Oracle no garantiza
+cual de ellos se ejecutara primero.
+
+Para declarar una precedencia, se utiliza `FOLLOWS`
+
+```sql
+CREATE OR REPLACE TRIGGER trg_inscripcion_valida
+BEFORE INSERT ON inscripcion
+FOR EACH ROW
+FOLLOWS trg_inscripcion_bi
+BEGIN
+    NULL;
+END;
+/
+```
+
+_En este caso, el trigger "trg_inscripcion_valida" se ejecuta despues de "trg_inscripcion_bi" dentro del orden aplicable a
+ese tipo de trigger._
+
+No significa que se ejecute despues de cualquier trigger existente: La precedencia se declara entre triggers compatibles
+con las reglas de orden de Oracle.
+
+## Sentencias
+
+### ALTER TRIGGER ... DISABLE
+
+Deshabilita un trigger sin eliminarlo
+
+```sql
+ALTER TRIGGER trg_inscripcion_valida DISABLE;
+```
+
+### ALTER TABLE ... DISABLE ALL TRIGGERS
+
+Deshabilita todos los triggers de la tabla
+
+```sql
+ALTER TABLE inscripcion DISABLE ALL TRIGGERS;
+```
+
+_**Nota:** Un trigger deshablitado sigue existiendo como objeto, pero no se dispara_
+
+## Reglas importantes y errores frecuentes
+
+|**Error o sintoma**|**Causa**|**Que se debe hacer**|
+|---|---|---|
+|`ORA-04091`|Un trigger de fila consulta su propia tabla mutante|Usar un trigger compuesto o rediseñar la logica|
+|`ORA-04098`|El trigger es invalido y no puede ejecutarse correctamente|Revisar los errores de compilacion y recompilar|
+|`ORA-04092`|Se intenta hacer **COMMIT** o **ROLLBACK** dentro de un trigger|Eliminar esa operacion del trigger|
+|El valor de `:NEW` no cambia como se esperaba|Se intento modificar en un trigger **AFTER** de fila|Hacer la asignacion en BEFORE de fila|
+|El DML se vuelve lento|El trigger de fila ejecuta consultas adicionales por cada registro|Evaluar un trigger de sentencia o procesamiento masivo|
+
+**¿Por que no se puede hacer `COMMIT` en un trigger normal?**
+
+Porque el trigger forma parte de la transacción que provocó el evento. Si el trigger confirmara los cambios por su cuenta, 
+podría romper la atomicidad de la operación principal.
+
+Por ejemplo, si un `INSERT` activa un trigger que guarda una auditoría y luego falla la operación principal, queremos evitar 
+que la auditoría quede confirmada de manera independiente, salvo que exista una decisión explícita de diseño para ello.
+
+## Consultar, diagnosticar y recompilar triggers
+
+### Consultar los triggers de una tabla
+
+```sql
+SELECT trigger_name,                 --Nombre del trigger
+       trigger_type,                 --Tipo de trigger
+       triggering_event,             --Evento que lo activa
+       status                        --Estado, como "ENABLED" o "DISABLED"
+FROM user_triggers
+WHERE table_name = 'INSCRIPCION';
+```
+### Consultar el codigo almacenado
+
+```sql
+SELECT trigger_body
+FROM user_triggers
+WHERE trigger_name = 'TRG_AUDITORIA';
+```
+
+### Consultar errores de compilacion
+
+```sql
+SELECT name, line, text
+FROM user_errors
+WHERE type = 'TRIGGER';
+```
+
+### Recompilar un trigger
+
+```sql
+ALTER TRIGGER trg_auditoria COMPILE;
+```
