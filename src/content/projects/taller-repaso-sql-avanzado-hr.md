@@ -1,5 +1,5 @@
 ---
-title: SQL Avanzado aplicado sobre el esquema HR
+title: SQL Avanzado - Repaso
 description: >-
  En el taller se realizaron algunos puntos sobre el esquema HR de Oracle los cuales están pensados para practicar los mecanismos de SQL avanzado, de esta manera se pudo reforzar los conceptos y aprender otras herramientas para realizar consultas en SQL.
 image: '@assets/projects/sql-avanzado/image.png'
