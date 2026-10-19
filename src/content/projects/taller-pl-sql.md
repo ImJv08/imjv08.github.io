@@ -520,3 +520,321 @@ SELECT c.id_cliente,
 **EXPLICACION**
 
 **¿Por que una funcion puede invocarse desde una sentencia SQL?** Debido a que el motor la trata como una expresion mas. Para cada fila evalua la funcion con los valores de esa fila y usa el resultado como si fuera una columna. Por esta razon, puede ir en las clausulas `SELECT`, `WHERE` u `ORDER BY`.
+
+## Parte 3 - Cursores
+
+### 3.1 Cursor explicito
+
+Se pide utilizar un cursor explicito para recorrer los productos cuyo stock consolidado este por debajo del stock minimo, e imprima un reporte con:
+- Codigo
+- Nombre
+- Stock actual
+- Stock minimo
+- Unidades faltantes
+- Total de productos
+
+**RESPUESTA**
+
+```sql
+DECLARE
+   cursor c_bajo_stock is
+        select codigo, producto, stock_total, stock_minimo,
+               stock_minimo - stock_total as faltante
+        from   v_stock_consolidado
+        where  stock_total < stock_minimo
+        order by faltante desc;
+
+    vv_codigo    varchar2(20);
+    vv_nombre    varchar2(100);
+    vn_actual    number;
+    vn_minimo    number;
+    vn_faltante  number;
+    vn_total     number := 0;
+BEGIN
+    dbms_output.put_line('reporte de productos bajo stock minimo');
+    dbms_output.put_line('--------------------------------------');
+
+    open c_bajo_stock;
+    loop
+        fetch c_bajo_stock into vv_codigo, vv_nombre, vn_actual, vn_minimo, vn_faltante;
+        exit when c_bajo_stock%notfound;
+
+        dbms_output.put_line(vv_codigo || ' | ' || vv_nombre ||
+                             ' | actual: ' || vn_actual ||
+                             ' | minimo: ' || vn_minimo ||
+                             ' | faltan: ' || vn_faltante);
+        vn_total := vn_total + 1;
+    end loop;
+    close c_bajo_stock;
+
+    dbms_output.put_line('--------------------------------------');
+    dbms_output.put_line('total productos en condicion: ' || vn_total);
+END;
+/
+```
+![Resultado del ejercicio](src/assets/projects/pl-sql/cursores/cursor-explicito.png)
+
+**EXPLICACION**
+
+El utilizar un cursor explicito nos permite tener control sobre cada paso, ademas del atributo `%NOTFOUND`, el cual nos permite identificar el final del cursor.
+
+**¿Por que se utilizo la vista `v_stock_consolidado`?**ss
+
+Esta vista ya trae el stock sumado de todas las bodegas (es decir, el stock consolidado), asi que el filtro stock_total < stock_minimo es directo.
+
+### 3.2 Cursor parametrizado
+
+En este ejercicio nos piden hacer un bloque anonimo en donde un cursor parametrizado reciba el identificador del cliente y un rango de fechas, y muestre los pedidos **CONFIRMADOS** de ese cliente en ese rango, con:
+- Su total
+- Cantidad de lineas de cada pedido.
+
+**RESPUESTA**
+
+```sql
+DECLARE
+   cursor c_pedidos (p_cliente in number, p_ini in date, p_fin in date) is
+        select p.id_pedido, p.fecha_pedido, p.total,
+               count(d.linea) as lineas
+        from   pedido p
+        left join detalle_pedido d on d.id_pedido = p.id_pedido
+        where  p.id_cliente = p_cliente
+        and    p.estado = 'CONFIRMADO'
+        and    p.fecha_pedido between p_ini and p_fin
+        group by p.id_pedido, p.fecha_pedido, p.total
+        order by p.fecha_pedido;
+
+    vn_id      number;
+    vd_fecha   date;
+    vn_total   number;
+    vn_lineas  number;
+    vn_suma    number := 0;
+BEGIN
+    dbms_output.put_line('pedidos confirmados cliente 501 - 2026');
+
+    open c_pedidos(501, to_date('2026-01-01','yyyy-mm-dd'),
+                        to_date('2026-12-31','yyyy-mm-dd'));
+    loop
+        fetch c_pedidos into vn_id, vd_fecha, vn_total, vn_lineas;
+        exit when c_pedidos%notfound;
+
+        dbms_output.put_line('pedido ' || vn_id ||
+                             ' | ' || to_char(vd_fecha,'yyyy-mm-dd') ||
+                             ' | lineas: ' || vn_lineas ||
+                             ' | total: ' || vn_total);
+        vn_suma := vn_suma + vn_total;
+    end loop;
+    close c_pedidos;
+
+    dbms_output.put_line('suma total: ' || vn_suma);
+END;
+/
+```
+![Resultado del ejercicio](src/assets/projects/pl-sql/cursores/cursor-parametrizado.png)
+
+**EXPLICACION**
+
+Al ser un cursor parametrizado, este cursos tiene los parametros (p_cliente, p_ini, p_fin), a los cuales se les pasa la informacion en el `OPEN c_pedidos(501, to_date('2026-01-01','yyyy-mm-dd'), to_date('2026-12-31','yyyy-mm-dd'));`
+
+### 3.3 Cursor `FOR UPDATE` con `WHERE CURRENT OF`
+
+Nos piden hacer un bloque anonimo que contenga un **CURSOR FOR UPDATE** que recorra los productos de una categoria y ajuste su precio un porcentaje dado. Adicionalmente, se debe utilizar **WHERE CURRENT OF**.
+
+Se deben seguir las siguientes pautas:
+- No debe poder modificar productos inactivos
+- El precio resultante no puede quedar por debajo del costo mas el margen minimo de la categoria
+
+**RESPUESTA**
+
+```sql
+DECLARE
+    vn_categoria  number := 2;
+    vn_pct        number := 10;
+
+    cursor c_productos is
+        select p.id_producto, p.codigo, p.nombre, p.precio_unitario,
+               p.costo_unitario, p.activo, c.margen_minimo
+        from   producto p
+        join categoria c on c.id_categoria = p.id_categoria
+        where  p.id_categoria = vn_categoria
+        for update of p.precio_unitario nowait;
+
+    vn_id       number;
+    vv_codigo   varchar2(20);
+    vv_nombre   varchar2(100);
+    vn_precio   number(12,2);
+    vn_costo    number(12,2);
+    vc_activo   char(1);
+    vn_margen   number(5,2);
+    vn_nuevo    number(12,2);
+    vn_piso     number(12,2);
+    vn_ok       number := 0;
+    vn_omitidos number := 0;
+BEGIN
+    open c_productos;
+    loop
+        fetch c_productos into vn_id, vv_codigo, vv_nombre, vn_precio,
+                               vn_costo, vc_activo, vn_margen;
+        exit when c_productos%notfound;
+
+        if vc_activo = 'N' then
+            vn_omitidos := vn_omitidos + 1;
+            continue;
+        end if;
+
+        vn_nuevo := round(vn_precio * (1 + vn_pct/100), 2);
+        vn_piso  := round(vn_costo * (1 + vn_margen/100), 2);
+
+        if vn_nuevo < vn_piso then
+            dbms_output.put_line('omitido ' || vv_codigo ||
+                                 ': nuevo ' || vn_nuevo ||
+                                 ' < piso ' || vn_piso);
+            vn_omitidos := vn_omitidos + 1;
+        else
+            update producto
+            set    precio_unitario = vn_nuevo
+            where  current of c_productos;
+
+            dbms_output.put_line('ok ' || vv_codigo ||
+                                 ': ' || vn_precio || ' -> ' || vn_nuevo);
+            vn_ok := vn_ok + 1;
+        end if;
+    end loop;
+    close c_productos;
+
+    dbms_output.put_line('actualizados: ' || vn_ok ||
+                         ' | omitidos: ' || vn_omitidos);
+    commit;
+exception
+    when others then
+        if c_productos%isopen then close c_productos; end if;
+        rollback;
+        dbms_output.put_line('error: ' || sqlerrm);
+        raise;
+END;
+/
+```
+![Resultado del ejercicio](src/assets/projects/pl-sql/cursores/cursor-forupdate.png)
+
+**EXPLICACION**
+
+- Se utilizó `FOR UPDATE ... NOWAIT` debido a que hace que el cursor falle de inmediato si alguna de las filas que quiere bloquear ya esta bloqueada por otra sesion, en lugar de quedarse esperando/bloqueado.
+
+- **¿Que bloqueo genera?** Bloquea cada fila leida con un lock exclusivo, y ese bloqueo dura hasta el commit o rollback.
+
+- **¿Por que `CURRENT OF`?** Ya que esta clausula hace que se actualicen exactamente la fila que el cursor tiene posicionada, que ya esta bloqueada. Un `UPDATE ... WHERE` comun, obligaria a buscar de nuevo el id que el cursor ya tiene seleccioando.
+
+### 3.4 SP_LISTAR_MOVIMIENTOS
+
+Se pude crear un procedimiento que reciba un identificador de producto y devuelva un `SYS_REFCURSOR` con los movimientos de inventario de ese producto. Deben estar ordenados por fecha.
+
+**RESPUESTA**
+
+```sql
+CREATE OR REPLACE PROCEDURE SP_LISTAR_MOVIMIENTOS (
+    p_id_producto IN  NUMBER,
+    p_cursor      OUT SYS_REFCURSOR
+) IS
+BEGIN
+    open p_cursor for
+        select m.id_movimiento, m.fecha_mov, m.tipo, m.cantidad,
+        b.nombre as bodega, m.id_pedido, m.observacion
+        from   movimiento_inventario m
+        join bodega b on b.id_bodega = m.id_bodega
+        where  m.id_producto = p_id_producto
+        order by m.fecha_mov, m.id_movimiento;
+
+END SP_LISTAR_MOVIMIENTOS;
+/
+-- Bloque consumidor:
+DECLARE
+   v_cursor   sys_refcursor;
+    vn_id       number;
+    vd_fecha    date;
+    vv_tipo     varchar2(10);
+    vn_cant     number;
+    vv_bodega   varchar2(60);
+    vn_pedido   number;
+    vv_obs      varchar2(200);
+    vn_total    number := 0;
+BEGIN
+   sp_listar_movimientos(1001, v_cursor);
+
+    loop
+        fetch v_cursor into vn_id, vd_fecha, vv_tipo, vn_cant, vv_bodega, vn_pedido, vv_obs;
+
+        exit when v_cursor%notfound;
+
+        dbms_output.put_line(vn_id || ' | ' || to_char(vd_fecha,'yyyy-mm-dd') ||
+                             ' | ' || vv_tipo || ' | ' || vn_cant ||
+                             ' | ' || vv_bodega || ' | ' || nvl(vv_obs,'-'));
+        vn_total := vn_total + 1;
+    end loop;
+    close v_cursor;
+
+    dbms_output.put_line('total movimientos: ' || vn_total);
+END;
+/
+```
+![Resultado del ejercicio](src/assets/projects/pl-sql/cursores/listar-movimientos.png)
+
+**EXPLICACION**
+
+- **¿Por que `SYS_REF_CURSOR`?** Es un puntero a un conjunto de resultados que puede pasarse como parametro `OUT`. Es la forma estandar de devolver conjuntos de filas a aplicaciones.
+
+_**Nota:** La responsabilidad de cerrar el cursor es del consumidor, y olvidar genera `ORA-01000`_
+
+### 3.5 BULK COLLECT + FORALL
+
+Nos piden hacer un bloque anonimo que cargue (Con `BULK COLLECT`) los productos de una categoria en una coleccion . Ademas se debe usar `FORALL`para actualizar su stock minimo.
+
+**RESPUESTA**
+
+```sql
+DECLARE
+     vn_categoria  number := 1;
+    vn_minimo     number := 30;
+
+    type t_ids is table of producto.id_producto%type index by pls_integer;
+    type t_min is table of producto.stock_minimo%type index by pls_integer;
+
+    v_ids    t_ids;
+    v_mins   t_min;
+    v_filas  number := 0;
+BEGIN
+     select id_producto, stock_minimo
+    bulk collect into v_ids, v_mins
+    from producto
+    where id_categoria = vn_categoria
+    and   activo = 'S';
+
+    dbms_output.put_line('productos cargados: ' || v_ids.count);
+
+    if v_ids.count > 0 then
+        forall i in 1 .. v_ids.count
+            update producto
+            set    stock_minimo = vn_minimo
+            where  id_producto = v_ids(i);
+
+        v_filas := sql%rowcount;
+        dbms_output.put_line('filas actualizadas: ' || v_filas);
+    end if;
+
+    commit;
+exception
+    when others then
+        rollback;
+        dbms_output.put_line('error: ' || sqlerrm);
+        raise;
+END;
+/
+```
+![Resultado del ejercicio](src/assets/projects/pl-sql/cursores/bulk-collect.png)
+
+**EXPLICACION**
+
+Este bloque carga en dos colecciones (v_ids, v_mins) los productos activos de la categoría con un solo `SELECT ... BULK COLLECT INTO`. Luego `FORALL i IN 1..v_ids.COUNT` ejecuta el UPDATE de todas las filas como una sola operación por lotes, y cuenta con `SQL%ROWCOUNT`.
+
+- **¿Que costo elimina?** Elimina el cambio de contexto entre el motor SQL y el motor PL/SQL. Un `FOR con un UPDATE` por iteración envía N sentencias al motor SQL. `FORALL` envía el lote completo en una sola llamada.
+
+
+- **¿Desde que volumen se empieza a notar?** Con unos cientos de filas empieza a ser medible, y con miles o más la diferencia es grande.s
